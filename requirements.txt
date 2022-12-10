@@ -2,3 +2,4 @@ pandas==1.5.2
 matplotlib==3.6.2 
 nltk==3.7
 wordcloud==1.8.2.2
+textblob==0.17.1

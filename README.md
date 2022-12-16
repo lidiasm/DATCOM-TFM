@@ -15,3 +15,10 @@ Se pretende utilizar los conjuntos de entrenamiento y validación correspondient
 * Conjunto de **entrenamiento con 6.977 textos**.
 * Conjunto de **validación con 4.368 textos**.
 * **Clases binarias balanceadas**: *sexist* y *non-sexist*.
+
+### Propuestas y aproximaciones
+
+La gran mayoría de las soluciones implementadas por los participantes en sendas competiciones se basan en el uso de variantes de **arquitecturas complejas**, tales como *BERT* o *LSTM*. No obstante, existe un amplio número de candidatos que comenzaron experimentando con **algoritmos clásicos** de Aprendizaje Automático como *Random Forest*, *Support Vector Machine* y Regresión Logística. Con el propósito de comprender el problema se establecen ambas aproximaciones como **pilares** fundamentales para la construcción de este proyecto.
+
+### Tecnologías
+

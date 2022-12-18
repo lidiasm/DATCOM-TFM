@@ -140,7 +140,15 @@ def to_lowercase(dataset: pd.DataFrame, column: str):
 def text_processing_pipeline(dataset: pd.DataFrame, column: str):
     """
     Applies the next text processing techniques to a text
-    column in a dataset.
+    column in a dataset. 
+        - Removes links from texts.
+        - Removes mentioned users from texts.
+        - Removes hashtags from texts.
+        - Removes special characters, digits, ...
+          leaving only alphabetical characters.
+        - Removes stopwords from english and spanish texts.
+        - Removes one-size words from texts.
+        - Converts characters to lowercase.
 
     Parameters
     ----------

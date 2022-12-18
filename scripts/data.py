@@ -27,7 +27,7 @@ def read_testing_dataset():
     """
     return pd.read_table(EXIST_TESTING_DATASET_PATH)
 
-def get_top_ngrams(dataset, column, n_words):
+def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
     """
     Function that splits a set of texts into sentences 
     of N words (N-grams) to then calculate the frequency 
@@ -58,7 +58,7 @@ def get_top_ngrams(dataset, column, n_words):
         .explode("ngrams")) \
         .sort_values("count", ascending=False)
 
-def get_sentiments(dataset, class_column, text_column):
+def get_sentiments(dataset: pd.DataFrame, class_column: str, text_column: str):
     """
     Function that gets the sentiments of a set of text 
     splitted by a class column. The main purpose of this
@@ -77,10 +77,12 @@ def get_sentiments(dataset, class_column, text_column):
 
     Returns
     -------
-    None if there aren't any class labels 
-    A dictionary with the number of positive, neutral
-    and negative texts in descending order.
+    None if there aren't any class labels
+    A dictionary with the sentiment frequencies per class
     """
+    # Dictionary to save the sentiment frequency per class
+    sentiment_freq_per_class = {}
+
     # Get a list of unique class labels
     unique_classes = list(set(list(dataset[class_column].values)))
 
@@ -104,5 +106,7 @@ def get_sentiments(dataset, class_column, text_column):
             for sentiment in ["pos", "neg", "neu"]}
 
         # Sort the quantities in descending order
-        return dict(sorted(one_class_sentiment_frequencies.items(), 
+        sentiment_freq_per_class[class_] = dict(sorted(one_class_sentiment_frequencies.items(), 
                     key=lambda item: item[1], reverse=True))
+
+    return sentiment_freq_per_class

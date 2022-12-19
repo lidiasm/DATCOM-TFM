@@ -1,12 +1,17 @@
 import re
 import nltk
+import warnings
 import pandas as pd
+from sklearn import preprocessing
 from sklearn.feature_extraction.text import CountVectorizer
 
-# Descarga una lista de stopwords
+# Ignore regex warnins
+warnings.filterwarnings("ignore")
+
+# Download a list of stopwords
 nltk.download('stopwords')
 
-# Lista de stopwords en inglés y español
+# Get the spanish and engish stopwords
 STOPWORDS = nltk.corpus.stopwords.words("spanish") + nltk.corpus.stopwords.words("english")
 
 def delete_urls(dataset: pd.DataFrame, column: str):
@@ -187,20 +192,71 @@ def text_processing_pipeline(dataset: pd.DataFrame, column: str):
 
     return dataset
 
-def to_bag_of_words(docs: list):
+def to_bag_of_words(training_docs: list, testing_docs: list):
     """
-    Creates a bag of words converting a list of text documents
-    into numeric vectors by computing the word frequencies
-    per text document.
+    Creates a training and testing bag of words converting 
+    them into numeric vectors by computing the word frequencies 
+    per document. Both datasets are needed so both bags have 
+    the same number of features.
 
     Parameters
     ----------
-    doc: list
-        A list of text documents.
+    training_docs : list
+        A list of training documents.
+    testing_docs : list
+        A list of testing documents.
 
     Returns
     -------
-    A numpy 2-array.
+    A dictionary whose keys are:
+        - 'training': contains the bag of training words.
+        - 'testing': contains the bag of testing
     """
     vectorizer = CountVectorizer()
-    return vectorizer.fit_transform(docs).toarray()
+    return {
+        "training": vectorizer.fit_transform(training_docs),
+        "testing": vectorizer.transform(testing_docs).toarray()
+    }
+
+def encode_to_numeric_labels(dataset: pd.DataFrame, column: str, encodings: dict = {}):
+    """
+    Replaces categorical labels stored in a specific column within
+    a dataset with the provided list of numeric values or creating
+    it using a LabelEncoder object.
+
+    Parameters
+    ----------
+    dataset : Pandas dataframe
+        A dataset which contains the class labels to encode.
+    column : str
+        The column name in which the class labels are stored.
+    encodings : dict (optional)
+        A dictionary which contains the categorical labels and
+        their numeric labels associated.
+
+    Returns
+    -------
+    A list with the encoded labels if a list of encodings is provided.
+    Otherwise a dictionary whose keys are:
+        - 'values': contains a list with the encoded values
+        - 'classes': stores a dictionary with the links between 
+                    the original and the encoded labels.
+    """
+    if len(encodings) > 0:
+        # Replace the categorical labels with the numeric labels
+        return [encodings[val] for val in list(dataset[column].values)]
+    
+    else:
+        # Create a new encoder
+        encoder = preprocessing.LabelEncoder()
+
+        # Encode the categorical values to numeric
+        encoded_values = encoder.fit(list(dataset[column].values))
+
+        # Get the 
+        encoded_classes = encoder.classes_
+    
+        return {
+            "values": encoded_values,
+            "classes": encoded_classes
+        }

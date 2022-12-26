@@ -5,7 +5,9 @@ import warnings
 import pandas as pd
 from sklearn import preprocessing
 from nltk.stem.snowball import SnowballStemmer
-from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+import numpy as np
+from gensim.models import Word2Vec
 
 # Ignore regex warnins
 warnings.filterwarnings("ignore")
@@ -294,32 +296,6 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
 
     return dataset
 
-def to_bag_of_words(training_docs: list, testing_docs: list):
-    """
-    Creates a training and testing bag of words converting 
-    them into numeric vectors by computing the word frequencies 
-    per document. Both datasets are needed so both bags have 
-    the same number of features.
-
-    Parameters
-    ----------
-    training_docs : list
-        A list of training documents.
-    testing_docs : list
-        A list of testing documents.
-
-    Returns
-    -------
-    A dictionary whose keys are:
-        - 'training': contains the bag of training words.
-        - 'testing': contains the bag of testing
-    """
-    vectorizer = CountVectorizer()
-    return {
-        "training": vectorizer.fit_transform(training_docs),
-        "testing": vectorizer.transform(testing_docs).toarray()
-    }
-
 def encode_to_numeric_labels(dataset: pd.DataFrame, column: str, encodings: dict = {}):
     """
     Replaces categorical labels stored in a specific column within
@@ -362,3 +338,190 @@ def encode_to_numeric_labels(dataset: pd.DataFrame, column: str, encodings: dict
             "values": encoded_values,
             "classes": encoded_classes
         }
+
+def to_bag_of_words(training_docs: list, testing_docs: list):
+    """
+    Creates a training and testing bag of words converting 
+    them into numeric vectors by computing the word frequencies 
+    per document. Both datasets are needed so both bags have 
+    the same number of features.
+
+    Parameters
+    ----------
+    training_docs : list
+        A list of training documents.
+    testing_docs : list
+        A list of testing documents.
+
+    Returns
+    -------
+    A dictionary whose keys are:
+        - 'training': contains the bag of training words.
+        - 'testing': contains the bag of testing
+    """
+    # Create a CountVectorizer object
+    bg_vectorizer = CountVectorizer()
+
+    # Train the object with the training dataset in order to then
+    # encode both datasets
+    return {
+        "training": bg_vectorizer.fit_transform(training_docs),
+        "testing": bg_vectorizer.transform(testing_docs).toarray()
+    }
+
+def to_tf_idf(training_docs: list, testing_docs: list):
+    """
+    Creates two lists of training and testing documents
+    encoded after applying TF-IDF. This technique computes
+    the absolute and relative frequencies to then select the
+    most relevant terms for each document and the entire 
+    population. Both datasets are needed so both lists have 
+    the same number of features.
+
+    Parameters
+    ----------
+    training_docs : list
+        A list of training documents.
+    testing_docs : list
+        A list of testing documents.
+
+    Returns
+    -------
+    A dictionary whose keys are:
+        - 'training': contains a list with the training TF-IDF numbers.
+        - 'testing': contains a list with the testing TF-IDF numbers.
+    """
+    # Create a TF-IDF vectorizer object
+    tfidf_vectorizer = TfidfVectorizer()
+
+    # Train the object with the training dataset in order to then
+    # encode both datasets
+    return {
+        "training": tfidf_vectorizer.fit_transform(training_docs),
+        "testing": tfidf_vectorizer.transform(testing_docs).toarray()
+    }
+
+def to_word_2_vec(docs: list, vector_size: int = 100, 
+    window:int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+    """
+    Creates a Word2Vec model to train it using a provided list
+    of documents with the goal of converting them into word
+    embeddings. To do that each document is splitted into multiple
+    words to then encode them as numeric vectors.
+
+    Parameters
+    ----------
+    docs : list
+        The list of text documents to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    algorithm : int, optional (default 0)
+        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+
+    Returns
+    -------
+    A list of Numpy ndarray with the word embeddings per document.
+    """
+    # Split each document into tokens (words) deleting the last whitespace
+    tokens = [doc.split(" ") for doc in docs]
+
+    # Create a Word2Vec model with a particular vector size
+    w2v_model = Word2Vec(
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        sg=algorithm)
+
+    # Build a set of terms to then train the model
+    w2v_model.build_vocab(tokens)
+    w2v_model.train(
+        tokens, 
+        total_examples=w2v_model.corpus_count,
+        epochs=epochs)
+    w2v_vocab = set(w2v_model.wv.index_to_key)
+
+    # Create aggregated sentence vectors based on the tokens and Word2Vec vocabulary
+    agg_sentences = np.array([np.array(
+        [w2v_model.wv[word] for word in doc if word in w2v_vocab]) 
+        for doc in tokens])
+
+    # Normalize sentence vectors using the averaging of the word vectors 
+    # for each sentence in order to then be used in ML models
+    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float) 
+            for sent in agg_sentences] 
+
+def word2vec_pipeline(
+    training_df: pd.DataFrame, training_text_col: str,
+    testing_df: pd.DataFrame, testing_text_col: str, 
+    vector_size: int = 100, window:int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+    """
+    Creates a training and a testing datasets based on the
+    Word2Vec technique to encode a set of texts as word embeddings.
+    These datasets are aimed to be used directly in the building 
+    Machine Learning models.
+
+    Parameters
+    ----------
+    training_df : Pandas dataframe
+        A training dataset to encode.
+    training_text_col : str
+        A column name in which there are the set of training texts to encode.
+    testing_df : Pandas dataframe
+        A testing dataset to encode.
+    testing_text_col : str
+        A column name in which there are the set of testing texts to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    algorithm : int, optional (default 0)
+        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+
+    Returns
+    -------
+    A dictionary whose keys are:
+        - 'training': contains a training dataset encoded through Word2Vec.
+        - 'testing': contains a testing dataset encoded through Word2Vec.
+    """
+    # Create the training and testing Word2Vec embeddings
+    training_w2v_embeddings = to_word_2_vec(
+        list(training_df[training_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=algorithm
+    )
+    testing_w2v_embeddings = to_word_2_vec(
+        list(testing_df[testing_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=algorithm
+    )
+
+    # Create a training and a testing datasets adding names to
+    # the new created columns
+    training_w2v_df = pd.DataFrame(training_w2v_embeddings)
+    training_w2v_df.columns = [f"Feature {index+1}" for index in range(0, training_w2v_df.shape[1])]
+
+    testing_w2v_df = pd.DataFrame(testing_w2v_embeddings)
+    testing_w2v_df.columns = [f"Feature {index+1}" for index in range(0, testing_w2v_df.shape[1])]
+
+    return {
+        "training": training_w2v_df,
+        "testing": testing_w2v_df
+    }

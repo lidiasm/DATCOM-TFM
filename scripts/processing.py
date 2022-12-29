@@ -8,6 +8,7 @@ from nltk.stem.snowball import SnowballStemmer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
 from gensim.models import Word2Vec
+from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 
 # Ignore regex warnins
 warnings.filterwarnings("ignore")
@@ -434,17 +435,14 @@ def to_word_2_vec(docs: list, vector_size: int = 100,
 
     # Create a Word2Vec model with a particular vector size
     w2v_model = Word2Vec(
+        tokens,
         vector_size=vector_size,
         window=window,
         min_count=min_count,
-        sg=algorithm)
+        sg=algorithm,
+        epochs=epochs)
 
     # Build a set of terms to then train the model
-    w2v_model.build_vocab(tokens)
-    w2v_model.train(
-        tokens, 
-        total_examples=w2v_model.corpus_count,
-        epochs=epochs)
     w2v_vocab = set(w2v_model.wv.index_to_key)
 
     # Create aggregated sentence vectors based on the tokens and Word2Vec vocabulary
@@ -460,11 +458,11 @@ def to_word_2_vec(docs: list, vector_size: int = 100,
 def word2vec_pipeline(
     training_df: pd.DataFrame, training_text_col: str,
     testing_df: pd.DataFrame, testing_text_col: str, 
-    vector_size: int = 100, window:int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+    vector_size: int = 100, window:int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
     Creates a training and a testing datasets based on the
     Word2Vec technique to encode a set of texts as word embeddings.
-    These datasets are aimed to be used directly in the building 
+    These datasets are aimed to be used directly in the building of
     Machine Learning models.
 
     Parameters
@@ -486,7 +484,7 @@ def word2vec_pipeline(
         Ignores words with a frequency lower than this value.
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
-    algorithm : int, optional (default 0)
+    alg : int, optional (default 0)
         Training algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
@@ -502,7 +500,7 @@ def word2vec_pipeline(
         window=window,
         min_count=min_count,
         epochs=epochs,
-        algorithm=algorithm
+        algorithm=alg
     )
     testing_w2v_embeddings = to_word_2_vec(
         list(testing_df[testing_text_col].values),
@@ -510,7 +508,7 @@ def word2vec_pipeline(
         window=window,
         min_count=min_count,
         epochs=epochs,
-        algorithm=algorithm
+        algorithm=alg
     )
 
     # Create a training and a testing datasets adding names to
@@ -524,4 +522,129 @@ def word2vec_pipeline(
     return {
         "training": training_w2v_df,
         "testing": testing_w2v_df
+    }
+
+def to_doc_2_vec(docs: list, vector_size: int = 100, 
+    window:int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+    """
+    Creates a Doc2Vec model to train it using a provided list
+    of documents with the goal of converting each word to embeddings along
+    with the documents themselves. To do that each document is splitted 
+    into multiple words and documents to then encode them as numeric vectors.
+
+    Parameters
+    ----------
+    docs : list
+        The list of text documents to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    algorithm : int, optional (default 0)
+        Training algorithm: 0 for PV-DBOW, 1 for PV-DM.
+
+    Returns
+    -------
+    A list of Numpy ndarray with the word and document embeddings.
+    """
+    # Split each document into tokens (words) deleting the last whitespace
+    tokens = [doc.split(" ") for doc in docs]
+
+    # Create another vector for the documents
+    documents = [TaggedDocument(doc, [i]) for i, doc in enumerate(tokens)]
+
+    # Create and train a Word2Vec model with a particular vector size
+    d2v_model = Doc2Vec(
+        documents,
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        dm=algorithm,
+        epochs=epochs)
+
+    # Build a set of terms to then train the model
+    d2v_vocab = set(d2v_model.wv.index_to_key)
+
+    # Create aggregated sentence vectors based on the tokens and Word2Vec vocabulary
+    agg_sentences = np.array([np.array(
+        [d2v_model.wv[word] for word in doc if word in d2v_vocab]) 
+        for doc in tokens])
+
+    # Normalize sentence vectors using the averaging of the word vectors 
+    # for each sentence in order to then be used in ML models
+    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float) 
+            for sent in agg_sentences] 
+
+def doc2vec_pipeline(
+    training_df: pd.DataFrame, training_text_col: str,
+    testing_df: pd.DataFrame, testing_text_col: str, 
+    vector_size: int = 100, window:int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
+    """
+    Creates a training and a testing datasets based on the
+    Doc2Vec technique to encode a set of texts as word and doc embeddings.
+    These datasets are aimed to be used directly in the building of
+    Machine Learning models.
+
+    Parameters
+    ----------
+    training_df : Pandas dataframe
+        A training dataset to encode.
+    training_text_col : str
+        A column name in which there are the set of training texts to encode.
+    testing_df : Pandas dataframe
+        A testing dataset to encode.
+    testing_text_col : str
+        A column name in which there are the set of testing texts to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    alg : int, optional (default 0)
+        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+
+    Returns
+    -------
+    A dictionary whose keys are:
+        - 'training': contains a training dataset encoded through Doc2Vec.
+        - 'testing': contains a testing dataset encoded through Doc2Vec.
+    """
+    # Create the training and testing Doc2Vec embeddings
+    training_d2v_embeddings = to_doc_2_vec(
+        list(training_df[training_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=alg
+    )
+    testing_d2v_embeddings = to_doc_2_vec(
+        list(testing_df[testing_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=alg
+    )
+
+    # Create a training and a testing datasets adding names to
+    # the new created columns
+    training_d2v_df = pd.DataFrame(training_d2v_embeddings)
+    training_d2v_df.columns = [f"Feature {index+1}" for index in range(0, training_d2v_df.shape[1])]
+
+    testing_d2v_df = pd.DataFrame(testing_d2v_embeddings)
+    testing_d2v_df.columns = [f"Feature {index+1}" for index in range(0, testing_d2v_df.shape[1])]
+
+    return {
+        "training": training_d2v_df,
+        "testing": testing_d2v_df
     }

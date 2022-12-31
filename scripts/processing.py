@@ -7,7 +7,7 @@ from sklearn import preprocessing
 from nltk.stem.snowball import SnowballStemmer
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
-from gensim.models import Word2Vec
+from gensim.models import Word2Vec, FastText
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 
 # Ignore regex warnins
@@ -647,4 +647,125 @@ def doc2vec_pipeline(
     return {
         "training": training_d2v_df,
         "testing": testing_d2v_df
+    }
+
+def to_fast_text(docs: list, vector_size: int = 100, 
+    window:int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+    """
+    Creates a FastText model to train it using a provided list
+    of documents with the goal of converting them into word
+    embeddings. ---------------------------------
+
+    Parameters
+    ----------
+    docs : list
+        The list of text documents to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    algorithm : int, optional (default 0)
+        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+
+    Returns
+    -------
+    A list of Numpy ndarray with the word embeddings per document.
+    """
+    # Split each document into tokens (words) deleting the last whitespace
+    tokens = [doc.split(" ") for doc in docs]
+
+    # Create a FastText model with a particular vector size
+    ft_model = FastText(
+        tokens,
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        sg=algorithm,
+        epochs=epochs)
+
+    # Build a set of terms to then train the model
+    ft_vocab = set(ft_model.wv.index_to_key)
+
+    # Create aggregated sentence vectors based on the tokens and FastText vocabulary
+    agg_sentences = np.array([np.array(
+        [ft_model.wv[word] for word in doc if word in ft_vocab]) 
+        for doc in tokens])
+
+    # Normalize sentence vectors using the averaging of the word vectors 
+    # for each sentence in order to then be used in ML models
+    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float) 
+            for sent in agg_sentences] 
+
+def fasttext_pipeline(
+    training_df: pd.DataFrame, training_text_col: str,
+    testing_df: pd.DataFrame, testing_text_col: str, 
+    vector_size: int = 100, window:int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
+    """
+    Creates a training and a testing datasets based on the
+    FastText technique to encode a set of texts as word embeddings.
+    These datasets are aimed to be used directly in the building of
+    Machine Learning models.
+
+    Parameters
+    ----------
+    training_df : Pandas dataframe
+        A training dataset to encode.
+    training_text_col : str
+        A column name in which there are the set of training texts to encode.
+    testing_df : Pandas dataframe
+        A testing dataset to encode.
+    testing_text_col : str
+        A column name in which there are the set of testing texts to encode.
+    vector_size : int, optional (default 100)
+        Size of the word embedding vectors.
+    window : int, optional (default 5)
+        Max distance between the current and predicted word 
+        within a sentece.
+    min_count : int, optional (default 5)
+        Ignores words with a frequency lower than this value.
+    epochs : int, optional (default 5)
+        Number of iterations over the set of texts.
+    alg : int, optional (default 0)
+        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+
+    Returns
+    -------
+    A dictionary whose keys are:
+        - 'training': contains a training dataset encoded through FastText.
+        - 'testing': contains a testing dataset encoded through FastText.
+    """
+    # Create the training and testing FastText embeddings
+    training_ft_embeddings = to_fast_text(
+        list(training_df[training_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=alg
+    )
+    testing_ft_embeddings = to_fast_text(
+        list(testing_df[testing_text_col].values),
+        vector_size=vector_size,
+        window=window,
+        min_count=min_count,
+        epochs=epochs,
+        algorithm=alg
+    )
+
+    # Create a training and a testing datasets adding names to
+    # the new created columns
+    training_ft_df = pd.DataFrame(training_ft_embeddings)
+    training_ft_df.columns = [f"Feature {index+1}" for index in range(0, training_ft_df.shape[1])]
+
+    testing_ft_df = pd.DataFrame(testing_ft_embeddings)
+    testing_ft_df.columns = [f"Feature {index+1}" for index in range(0, testing_ft_df.shape[1])]
+
+    return {
+        "training": training_ft_df,
+        "testing": testing_ft_df
     }

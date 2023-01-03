@@ -877,10 +877,10 @@ def trained_embeddings_pipeline(
 
     # Create aggregated sentence vectors based on the tokens and the pre-trained vocabulary
     training_agg_sentences = np.array([np.array(
-        [pretrained_model.wv[word] for word in doc if word in pretrained_vocab])
+        [pretrained_model[word] for word in doc if word in pretrained_vocab])
         for doc in training_tokens])
     testing_agg_sentences = np.array([np.array(
-        [pretrained_model.wv[word] for word in doc if word in pretrained_vocab])
+        [pretrained_model[word] for word in doc if word in pretrained_vocab])
         for doc in testing_tokens])
 
     # Normalize sentence vectors using the averaging of the word vectors

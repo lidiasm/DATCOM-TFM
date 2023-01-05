@@ -2,30 +2,30 @@ import pandas as pd
 import nltk
 from textblob import TextBlob
 
-EXIST_TRAINING_DATASET_PATH = "../data/EXIST2021_training.tsv"
-EXIST_TESTING_DATASET_PATH = "../data/EXIST2021_test.tsv"
+EXIST_TRAIN_DATASET_PATH = "../data/EXIST2021_train.tsv"
+EXIST_TEST_DATASET_PATH = "../data/EXIST2021_test.tsv"
 
-def read_training_dataset():
+def read_train_dataset():
     """
-    Function that reads the EXIST training file to load the 
-    training dataset as dataframe.
-
-    Returns
-    -------
-    A Pandas dataframe
-    """
-    return pd.read_table(EXIST_TRAINING_DATASET_PATH)
-
-def read_testing_dataset():
-    """
-    Function that reads the EXIST testing file to load the 
-    testing dataset as dataframe.
+    Function that reads the EXIST train file to load the 
+    train dataset as dataframe.
 
     Returns
     -------
     A Pandas dataframe
     """
-    return pd.read_table(EXIST_TESTING_DATASET_PATH)
+    return pd.read_table(EXIST_TRAIN_DATASET_PATH)
+
+def read_test_dataset():
+    """
+    Function that reads the EXIST test file to load the 
+    test dataset as dataframe.
+
+    Returns
+    -------
+    A Pandas dataframe
+    """
+    return pd.read_table(EXIST_TEST_DATASET_PATH)
 
 def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
     """

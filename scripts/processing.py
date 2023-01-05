@@ -376,19 +376,19 @@ def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
         }
 
 def process_encode_datasets(
-    training_df: pd.DataFrame, testing_df: pd.DataFrame,
+    train_df: pd.DataFrame, test_df: pd.DataFrame,
     lemm: bool, stemm: bool):
     """
-    Processes the sets of training and testing documents
+    Processes the sets of train and test documents
     and encodes the class labels of both datasets to convert
     them into numeric labels.
 
     Parameters
     ----------
-    training_df : Pandas dataframe
-        A dataset which contains the training samples.
-    testing_df : Pandas dataframe
-        A dataset which contains the testing samples.
+    train_df : Pandas dataframe
+        A dataset which contains the train samples.
+    test_df : Pandas dataframe
+        A dataset which contains the test samples.
     lemm : bool
         True to lemmatize the texts, False to not apply it.
     stemm : bool
@@ -397,10 +397,10 @@ def process_encode_datasets(
     Returns
     -------
     A dictionary with the processed data and the encoded labels.
-        - 'training_df': a Pandas dataframe with the processed training texts.
-        - 'testing_df': a Pandas dataframe with the processed testing texts.
-        - 'encoded_training_labels': a list of numeric values with the encoded training labels.
-        - 'encoded_testing_labels': a list of numeric values with the encoded testing labels.
+        - 'train_df': a Pandas dataframe with the processed train texts.
+        - 'test_df': a Pandas dataframe with the processed test texts.
+        - 'encoded_train_labels': a list of numeric values with the encoded train labels.
+        - 'encoded_test_labels': a list of numeric values with the encoded test labels.
     """
     # Specific encoding for class labels
     encoding = {
@@ -409,62 +409,62 @@ def process_encode_datasets(
     }
 
     return {
-        "training_df": text_processing_pipeline(
-            dataset=training_df, 
+        "train_df": text_processing_pipeline(
+            dataset=train_df, 
             text_col="text", 
             lemm=lemm,
             stemm=stemm, 
             language_col="language"),
-        "testing_df":text_processing_pipeline(
-            dataset=testing_df, 
+        "test_df":text_processing_pipeline(
+            dataset=test_df, 
             text_col="text", 
             lemm=lemm,
             stemm=stemm, 
             language_col="language"),
-        "encoded_training_labels": to_numeric_labels(
-            dataset=training_df, 
+        "encoded_train_labels": to_numeric_labels(
+            dataset=train_df, 
             column="task1", 
             encoding=encoding),
-        "encoded_testing_labels": to_numeric_labels(
-            dataset=testing_df, 
+        "encoded_test_labels": to_numeric_labels(
+            dataset=test_df, 
             column="task1", 
             encoding=encoding)
     }
 
-def to_bag_of_words(training_docs: list, testing_docs: list):
+def to_bag_of_words(train_docs: list, test_docs: list):
     """
-    Creates a training and testing bag of words converting 
+    Creates a train and test bag of words converting 
     them into numeric vectors by computing the word frequencies 
     per document. Both datasets are needed so both bags have 
     the same number of features.
 
     Parameters
     ----------
-    training_docs : list
-        A list of training documents.
-    testing_docs : list
-        A list of testing documents.
+    train_docs : list
+        A list of train documents.
+    test_docs : list
+        A list of test documents.
 
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains the bag of training words.
-        - 'testing': contains the bag of testing
+        - 'train': contains the bag of train words.
+        - 'test': contains the bag of test
     """
     # Create a CountVectorizer object
     bg_vectorizer = CountVectorizer()
 
-    # Train the object with the training dataset in order to then
+    # Train the object with the train dataset in order to then
     # encode both datasets
     return {
-        "training": bg_vectorizer.fit_transform(raw_documents=training_docs),
-        "testing": bg_vectorizer.transform(raw_documents=testing_docs).toarray()
+        "train": bg_vectorizer.fit_transform(raw_documents=train_docs),
+        "test": bg_vectorizer.transform(raw_documents=test_docs).toarray()
     }
 
 
-def to_tf_idf(training_docs: list, testing_docs: list):
+def to_tf_idf(train_docs: list, test_docs: list):
     """
-    Creates two lists of training and testing documents
+    Creates two lists of train and test documents
     encoded after applying TF-IDF. This technique computes
     the absolute and relative frequencies to then select the
     most relevant terms for each document and the entire 
@@ -473,25 +473,25 @@ def to_tf_idf(training_docs: list, testing_docs: list):
 
     Parameters
     ----------
-    training_docs : list
-        A list of training documents.
-    testing_docs : list
-        A list of testing documents.
+    train_docs : list
+        A list of train documents.
+    test_docs : list
+        A list of test documents.
 
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains a list with the training TF-IDF numbers.
-        - 'testing': contains a list with the testing TF-IDF numbers.
+        - 'train': contains a list with the train TF-IDF numbers.
+        - 'test': contains a list with the test TF-IDF numbers.
     """
     # Create a TF-IDF vectorizer object
     tfidf_vectorizer = TfidfVectorizer()
 
-    # Train the object with the training dataset in order to then
+    # Train the object with the train dataset in order to then
     # encode both datasets
     return {
-        "training": tfidf_vectorizer.fit_transform(raw_documents=training_docs),
-        "testing": tfidf_vectorizer.transform(raw_documents=testing_docs).toarray()
+        "train": tfidf_vectorizer.fit_transform(raw_documents=train_docs),
+        "test": tfidf_vectorizer.transform(raw_documents=test_docs).toarray()
     }
 
 
@@ -517,7 +517,7 @@ def to_word_2_vec(docs: list, vector_size: int = 100,
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     algorithm : int, optional (default 0)
-        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+        train algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
     -------
@@ -550,25 +550,25 @@ def to_word_2_vec(docs: list, vector_size: int = 100,
 
 
 def word2vec_pipeline(
-        training_df: pd.DataFrame, training_text_col: str,
-        testing_df: pd.DataFrame, testing_text_col: str,
+        train_df: pd.DataFrame, train_text_col: str,
+        test_df: pd.DataFrame, test_text_col: str,
         vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
-    Creates a training and a testing datasets based on the
+    Creates a train and a test datasets based on the
     Word2Vec technique to encode a set of texts as word embeddings.
     These datasets are aimed to be used directly in the building of
     Machine Learning models.
 
     Parameters
     ----------
-    training_df : Pandas dataframe
-        A training dataset to encode.
-    training_text_col : str
-        A column name in which there are the set of training texts to encode.
-    testing_df : Pandas dataframe
-        A testing dataset to encode.
-    testing_text_col : str
-        A column name in which there are the set of testing texts to encode.
+    train_df : Pandas dataframe
+        A train dataset to encode.
+    train_text_col : str
+        A column name in which there are the set of train texts to encode.
+    test_df : Pandas dataframe
+        A test dataset to encode.
+    test_text_col : str
+        A column name in which there are the set of test texts to encode.
     vector_size : int, optional (default 100)
         Size of the word embedding vectors.
     window : int, optional (default 5)
@@ -579,25 +579,25 @@ def word2vec_pipeline(
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     alg : int, optional (default 0)
-        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+        train algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains a training dataset encoded through Word2Vec.
-        - 'testing': contains a testing dataset encoded through Word2Vec.
+        - 'train': contains a train dataset encoded through Word2Vec.
+        - 'test': contains a test dataset encoded through Word2Vec.
     """
-    # Create the training and testing Word2Vec embeddings
-    training_w2v_embeddings = to_word_2_vec(
-        docs=list(training_df[training_text_col].values),
+    # Create the train and test Word2Vec embeddings
+    train_w2v_embeddings = to_word_2_vec(
+        docs=list(train_df[train_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
         epochs=epochs,
         algorithm=alg
     )
-    testing_w2v_embeddings = to_word_2_vec(
-        docs=list(testing_df[testing_text_col].values),
+    test_w2v_embeddings = to_word_2_vec(
+        docs=list(test_df[test_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
@@ -605,19 +605,19 @@ def word2vec_pipeline(
         algorithm=alg
     )
 
-    # Create a training and a testing datasets adding names to
+    # Create a train and a test datasets adding names to
     # the new created columns
-    training_w2v_df = pd.DataFrame(data=training_w2v_embeddings)
-    training_w2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, training_w2v_df.shape[1])]
+    train_w2v_df = pd.DataFrame(data=train_w2v_embeddings)
+    train_w2v_df.columns = [
+        f"Feature {index+1}" for index in range(0, train_w2v_df.shape[1])]
 
-    testing_w2v_df = pd.DataFrame(data=testing_w2v_embeddings)
-    testing_w2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, testing_w2v_df.shape[1])]
+    test_w2v_df = pd.DataFrame(data=test_w2v_embeddings)
+    test_w2v_df.columns = [
+        f"Feature {index+1}" for index in range(0, test_w2v_df.shape[1])]
 
     return {
-        "training": training_w2v_df,
-        "testing": testing_w2v_df
+        "train": train_w2v_df,
+        "test": test_w2v_df
     }
 
 
@@ -643,7 +643,7 @@ def to_doc_2_vec(docs: list, vector_size: int = 100,
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     algorithm : int, optional (default 0)
-        Training algorithm: 0 for PV-DBOW, 1 for PV-DM.
+        train algorithm: 0 for PV-DBOW, 1 for PV-DM.
 
     Returns
     -------
@@ -679,25 +679,25 @@ def to_doc_2_vec(docs: list, vector_size: int = 100,
 
 
 def doc2vec_pipeline(
-        training_df: pd.DataFrame, training_text_col: str,
-        testing_df: pd.DataFrame, testing_text_col: str,
+        train_df: pd.DataFrame, train_text_col: str,
+        test_df: pd.DataFrame, test_text_col: str,
         vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
-    Creates a training and a testing datasets based on the
+    Creates a train and a test datasets based on the
     Doc2Vec technique to encode a set of texts as word and doc embeddings.
     These datasets are aimed to be used directly in the building of
     Machine Learning models.
 
     Parameters
     ----------
-    training_df : Pandas dataframe
-        A training dataset to encode.
-    training_text_col : str
-        A column name in which there are the set of training texts to encode.
-    testing_df : Pandas dataframe
-        A testing dataset to encode.
-    testing_text_col : str
-        A column name in which there are the set of testing texts to encode.
+    train_df : Pandas dataframe
+        A train dataset to encode.
+    train_text_col : str
+        A column name in which there are the set of train texts to encode.
+    test_df : Pandas dataframe
+        A test dataset to encode.
+    test_text_col : str
+        A column name in which there are the set of test texts to encode.
     vector_size : int, optional (default 100)
         Size of the word embedding vectors.
     window : int, optional (default 5)
@@ -708,25 +708,25 @@ def doc2vec_pipeline(
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     alg : int, optional (default 0)
-        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+        train algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains a training dataset encoded through Doc2Vec.
-        - 'testing': contains a testing dataset encoded through Doc2Vec.
+        - 'train': contains a train dataset encoded through Doc2Vec.
+        - 'test': contains a test dataset encoded through Doc2Vec.
     """
-    # Create the training and testing Doc2Vec embeddings
-    training_d2v_embeddings = to_doc_2_vec(
-        docs=list(training_df[training_text_col].values),
+    # Create the train and test Doc2Vec embeddings
+    train_d2v_embeddings = to_doc_2_vec(
+        docs=list(train_df[train_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
         epochs=epochs,
         algorithm=alg
     )
-    testing_d2v_embeddings = to_doc_2_vec(
-        docs=list(testing_df[testing_text_col].values),
+    test_d2v_embeddings = to_doc_2_vec(
+        docs=list(test_df[test_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
@@ -734,19 +734,19 @@ def doc2vec_pipeline(
         algorithm=alg
     )
 
-    # Create a training and a testing datasets adding names to
+    # Create a train and a test datasets adding names to
     # the new created columns
-    training_d2v_df = pd.DataFrame(data=training_d2v_embeddings)
-    training_d2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, training_d2v_df.shape[1])]
+    train_d2v_df = pd.DataFrame(data=train_d2v_embeddings)
+    train_d2v_df.columns = [
+        f"Feature {index+1}" for index in range(0, train_d2v_df.shape[1])]
 
-    testing_d2v_df = pd.DataFrame(data=testing_d2v_embeddings)
-    testing_d2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, testing_d2v_df.shape[1])]
+    test_d2v_df = pd.DataFrame(data=test_d2v_embeddings)
+    test_d2v_df.columns = [
+        f"Feature {index+1}" for index in range(0, test_d2v_df.shape[1])]
 
     return {
-        "training": training_d2v_df,
-        "testing": testing_d2v_df
+        "train": train_d2v_df,
+        "test": test_d2v_df
     }
 
 
@@ -771,7 +771,7 @@ def to_fast_text(docs: list, vector_size: int = 100,
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     algorithm : int, optional (default 0)
-        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+        train algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
     -------
@@ -804,25 +804,25 @@ def to_fast_text(docs: list, vector_size: int = 100,
 
 
 def fasttext_pipeline(
-        training_df: pd.DataFrame, training_text_col: str,
-        testing_df: pd.DataFrame, testing_text_col: str,
+        train_df: pd.DataFrame, train_text_col: str,
+        test_df: pd.DataFrame, test_text_col: str,
         vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
-    Creates a training and a testing datasets based on the
+    Creates a train and a test datasets based on the
     FastText technique to encode a set of texts as word embeddings.
     These datasets are aimed to be used directly in the building of
     Machine Learning models.
 
     Parameters
     ----------
-    training_df : Pandas dataframe
-        A training dataset to encode.
-    training_text_col : str
-        A column name in which there are the set of training texts to encode.
-    testing_df : Pandas dataframe
-        A testing dataset to encode.
-    testing_text_col : str
-        A column name in which there are the set of testing texts to encode.
+    train_df : Pandas dataframe
+        A train dataset to encode.
+    train_text_col : str
+        A column name in which there are the set of train texts to encode.
+    test_df : Pandas dataframe
+        A test dataset to encode.
+    test_text_col : str
+        A column name in which there are the set of test texts to encode.
     vector_size : int, optional (default 100)
         Size of the word embedding vectors.
     window : int, optional (default 5)
@@ -833,25 +833,25 @@ def fasttext_pipeline(
     epochs : int, optional (default 5)
         Number of iterations over the set of texts.
     alg : int, optional (default 0)
-        Training algorithm: 0 for CBOW, 1 for Skip-Gram.
+        train algorithm: 0 for CBOW, 1 for Skip-Gram.
 
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains a training dataset encoded through FastText.
-        - 'testing': contains a testing dataset encoded through FastText.
+        - 'train': contains a train dataset encoded through FastText.
+        - 'test': contains a test dataset encoded through FastText.
     """
-    # Create the training and testing FastText embeddings
-    training_ft_embeddings = to_fast_text(
-        docs=list(training_df[training_text_col].values),
+    # Create the train and test FastText embeddings
+    train_ft_embeddings = to_fast_text(
+        docs=list(train_df[train_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
         epochs=epochs,
         algorithm=alg
     )
-    testing_ft_embeddings = to_fast_text(
-        docs=list(testing_df[testing_text_col].values),
+    test_ft_embeddings = to_fast_text(
+        docs=list(test_df[test_text_col].values),
         vector_size=vector_size,
         window=window,
         min_count=min_count,
@@ -859,25 +859,25 @@ def fasttext_pipeline(
         algorithm=alg
     )
 
-    # Create a training and a testing datasets adding names to
+    # Create a train and a test datasets adding names to
     # the new created columns
-    training_ft_df = pd.DataFrame(data=training_ft_embeddings)
-    training_ft_df.columns = [
-        f"Feature {index+1}" for index in range(0, training_ft_df.shape[1])]
+    train_ft_df = pd.DataFrame(data=train_ft_embeddings)
+    train_ft_df.columns = [
+        f"Feature {index+1}" for index in range(0, train_ft_df.shape[1])]
 
-    testing_ft_df = pd.DataFrame(data=testing_ft_embeddings)
-    testing_ft_df.columns = [
-        f"Feature {index+1}" for index in range(0, testing_ft_df.shape[1])]
+    test_ft_df = pd.DataFrame(data=test_ft_embeddings)
+    test_ft_df.columns = [
+        f"Feature {index+1}" for index in range(0, test_ft_df.shape[1])]
 
     return {
-        "training": training_ft_df,
-        "testing": testing_ft_df
+        "train": train_ft_df,
+        "test": test_ft_df
     }
 
 
 def trained_embeddings_pipeline(
-        training_df: pd.DataFrame, training_text_col: str,
-        testing_df: pd.DataFrame, testing_text_col: str,
+        train_df: pd.DataFrame, train_text_col: str,
+        test_df: pd.DataFrame, test_text_col: str,
         model: str, vector_size: int = 100):
     """
     Downloads the provided pre-trained model to then load
@@ -899,14 +899,14 @@ def trained_embeddings_pipeline(
 
     Parameters
     ----------
-    training_df : Pandas dataframe
-        A training dataset to encode.
-    training_text_col : str
-        A column name in which there are the set of training texts to encode.
-    testing_df : Pandas dataframe
-        A testing dataset to encode.
-    testing_text_col : str
-        A column name in which there are the set of testing texts to encode.
+    train_df : Pandas dataframe
+        A train dataset to encode.
+    train_text_col : str
+        A column name in which there are the set of train texts to encode.
+    test_df : Pandas dataframe
+        A test dataset to encode.
+    test_text_col : str
+        A column name in which there are the set of test texts to encode.
     model : str
         The name of the pre-trained model to download and load its embeddings.
     vector_size : int, optional (default 100)
@@ -915,8 +915,8 @@ def trained_embeddings_pipeline(
     Returns
     -------
     A dictionary whose keys are:
-        - 'training': contains a training dataset encoded through the chosen model.
-        - 'testing': contains a testing dataset encoded through the chosen model.
+        - 'train': contains a train dataset encoded through the chosen model.
+        - 'test': contains a test dataset encoded through the chosen model.
     """
     # Download the pre-trained model if it's not been downloaded before
     pretrained_model = api.load(name=model)
@@ -924,37 +924,37 @@ def trained_embeddings_pipeline(
     # Build a set of terms to then train the model
     pretrained_vocab = set(pretrained_model.index_to_key)
 
-    # Split the training and testing documents into tokens
-    training_tokens = [doc.split(" ") for doc in list(
-        training_df[training_text_col].values)]
-    testing_tokens = [doc.split(" ") for doc in list(
-        testing_df[testing_text_col].values)]
+    # Split the train and test documents into tokens
+    train_tokens = [doc.split(" ") for doc in list(
+        train_df[train_text_col].values)]
+    test_tokens = [doc.split(" ") for doc in list(
+        test_df[test_text_col].values)]
 
     # Create aggregated sentence vectors based on the tokens and the pre-trained vocabulary
-    training_agg_sentences = np.array([np.array(
+    train_agg_sentences = np.array([np.array(
         [pretrained_model[word] for word in doc if word in pretrained_vocab])
-        for doc in training_tokens])
-    testing_agg_sentences = np.array([np.array(
+        for doc in train_tokens])
+    test_agg_sentences = np.array([np.array(
         [pretrained_model[word] for word in doc if word in pretrained_vocab])
-        for doc in testing_tokens])
+        for doc in test_tokens])
 
     # Normalize sentence vectors using the averaging of the word vectors
     # for each sentence in order to then be used in ML models
-    training_avg_sentences = [sent.mean(axis=0) if sent.size else
-                              np.zeros(vector_size, dtype=float) for sent in training_agg_sentences]
-    testing_avg_sentences = [sent.mean(axis=0) if sent.size else
-                             np.zeros(vector_size, dtype=float) for sent in testing_agg_sentences]
+    train_avg_sentences = [sent.mean(axis=0) if sent.size else
+                              np.zeros(vector_size, dtype=float) for sent in train_agg_sentences]
+    test_avg_sentences = [sent.mean(axis=0) if sent.size else
+                             np.zeros(vector_size, dtype=float) for sent in test_agg_sentences]
 
-    # Create a training and a testing datasets with column names
-    training_embeddings_df = pd.DataFrame(data=training_avg_sentences)
-    training_embeddings_df.columns = \
-        [f"Feature {index+1}" for index in range(0, training_embeddings_df.shape[1])]
+    # Create a train and a test datasets with column names
+    train_embeddings_df = pd.DataFrame(data=train_avg_sentences)
+    train_embeddings_df.columns = \
+        [f"Feature {index+1}" for index in range(0, train_embeddings_df.shape[1])]
 
-    testing_embeddings_df = pd.DataFrame(data=testing_avg_sentences)
-    testing_embeddings_df.columns = \
-        [f"Feature {index+1}" for index in range(0, testing_embeddings_df.shape[1])]
+    test_embeddings_df = pd.DataFrame(data=test_avg_sentences)
+    test_embeddings_df.columns = \
+        [f"Feature {index+1}" for index in range(0, test_embeddings_df.shape[1])]
 
     return {
-        "training": training_embeddings_df,
-        "testing": testing_embeddings_df
+        "train": train_embeddings_df,
+        "test": test_embeddings_df
     }

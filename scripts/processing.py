@@ -375,6 +375,61 @@ def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
             "classes": encoder.classes_
         }
 
+def process_encode_datasets(
+    training_df: pd.DataFrame, testing_df: pd.DataFrame,
+    lemm: bool, stemm: bool):
+    """
+    Processes the sets of training and testing documents
+    and encodes the class labels of both datasets to convert
+    them into numeric labels.
+
+    Parameters
+    ----------
+    training_df : Pandas dataframe
+        A dataset which contains the training samples.
+    testing_df : Pandas dataframe
+        A dataset which contains the testing samples.
+    lemm : bool
+        True to lemmatize the texts, False to not apply it.
+    stemm : bool
+        True to apply stemming to the texts, False to not apply it.
+
+    Returns
+    -------
+    A dictionary with the processed data and the encoded labels.
+        - 'training_df': a Pandas dataframe with the processed training texts.
+        - 'testing_df': a Pandas dataframe with the processed testing texts.
+        - 'encoded_training_labels': a list of numeric values with the encoded training labels.
+        - 'encoded_testing_labels': a list of numeric values with the encoded testing labels.
+    """
+    # Specific encoding for class labels
+    encoding = {
+        "non-sexist": 0, 
+        "sexist": 1
+    }
+
+    return {
+        "training_df": text_processing_pipeline(
+            dataset=training_df, 
+            text_col="text", 
+            lemm=lemm,
+            stemm=stemm, 
+            language_col="language"),
+        "testing_df":text_processing_pipeline(
+            dataset=testing_df, 
+            text_col="text", 
+            lemm=lemm,
+            stemm=stemm, 
+            language_col="language"),
+        "encoded_training_labels": to_numeric_labels(
+            dataset=training_df, 
+            column="task1", 
+            encoding=encoding),
+        "encoded_testing_labels": to_numeric_labels(
+            dataset=testing_df, 
+            column="task1", 
+            encoding=encoding)
+    }
 
 def to_bag_of_words(training_docs: list, testing_docs: list):
     """

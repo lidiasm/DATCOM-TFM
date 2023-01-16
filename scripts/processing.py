@@ -1,3 +1,4 @@
+import os
 import re
 import nltk
 import spacy
@@ -10,6 +11,7 @@ import numpy as np
 from gensim.models import Word2Vec, FastText
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 import gensim.downloader as api
+from sklearn.model_selection import train_test_split
 
 # Ignore regex warnins
 warnings.filterwarnings("ignore")
@@ -21,6 +23,13 @@ nltk.download('stopwords')
 STOPWORDS = nltk.corpus.stopwords.words(
     "spanish") + nltk.corpus.stopwords.words("english")
 
+# Rate to split the train dataset into a train and a validation dataset
+TRAIN_RATE = 0.8
+
+# Paths to the processed train, validation and test datasets
+TRAIN_DF_PATH = "../data/processed_EXIST2021_train.csv"
+VALID_DF_PATH = "../data/processed_EXIST2021_valid.csv"
+TEST_DF_PATH = "../data/processed_EXIST2021_test.csv"
 
 def delete_urls(dataset: pd.DataFrame, column: str):
     """
@@ -103,7 +112,7 @@ def delete_non_alphabetic_chars(dataset: pd.DataFrame, column: str):
         repl="")
 
 
-def delete_stopwords(dataset: pd.DataFrame, column: str):
+def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = []):
     """
     Removes stopwords from a set of english and
     spanish texts using the NLTK stopword list.
@@ -114,11 +123,15 @@ def delete_stopwords(dataset: pd.DataFrame, column: str):
         The data which contains a set of texts.
     column : str
         The column name in which the set of texts is stored.
+    add_stopwords : list
+        A list of additional stopwords to exclude.
 
     Returns
     -------
     A Series column
     """
+    STOPWORDS.extend(add_stopwords)
+
     return dataset[column].apply(lambda x: " ".join(
         [word for word in x.split() if word not in STOPWORDS and len(word) > 1]))
 
@@ -254,7 +267,9 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, language_col: str):
 
 
 def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
-                             lemm: bool = False, stemm: bool = False, language_col: str = ""):
+                            add_stopwords: list = [],
+                            lemm: bool = False, stemm: bool = False, 
+                            language_col: str = ""):
     """
     Applies the next text processing techniques to a text
     column in a dataset. 
@@ -273,6 +288,12 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
+    add_stopwords : list
+        A list of additional stopwords to exclude.
+    lemm : bool
+        True to lemmatize the texts, False to not apply it.
+    stemm : bool
+        True to apply stemming to the texts, False to not apply it.
     language_col : str
         The column name in which the text languages are stored.
 
@@ -306,7 +327,8 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
     # Delete stopwords for spanish and english texts
     dataset[cleaned_col] = delete_stopwords(
         dataset=dataset, 
-        column=cleaned_col)
+        column=cleaned_col,
+        add_stopwords=add_stopwords)
 
     # Delete one-char words
     dataset[cleaned_col] = delete_words_one_char(
@@ -430,6 +452,75 @@ def process_encode_datasets(
             column="task1", 
             encoding=encoding)
     }
+
+def get_train_valid_test_df(train_df: pd.DataFrame, test_df: pd.DataFrame):
+    """
+    Process the train and test datasets and encode the class
+    labels as numeric values returning a train dataset splitted
+    into 80% for training and 20% for validation, as well as the
+    entire test dataset. 
+    This function will be used to build LSTM models using Pytorch library.
+
+    Parameters
+    ----------
+    train_df : Pandas dataframe
+        A dataset which contains the train samples.
+    test_df : Pandas dataframe
+        A dataset which contains the test samples.
+
+    Returns
+    -------
+    A dictionary with the processed data and the encoded labels.
+        - 'train_df': a Pandas dataframe with the 80% of processed train texts.
+        - 'valid_df': a Pandas dataframe with the 20% of processed train texts.
+        - 'test_df': a Pandas dataframe with the 100% of processed test texts.
+    """
+    # Read the train, validation and test datasets if they
+    # are contained in files
+    if (os.path.exists(TRAIN_DF_PATH) and 
+        os.path.exists(VALID_DF_PATH) and 
+        os.path.exists(TEST_DF_PATH)):
+        return {
+            "train_df": pd.read_csv(TRAIN_DF_PATH),
+            "valid_df": pd.read_csv(VALID_DF_PATH),
+            "test_df": pd.read_csv(TEST_DF_PATH)
+        }
+
+    # Create the train, validation and test datasets to then
+    # save them in files
+    else:
+        # Process documents and encode class labels as numeric labels
+        processed_data = process_encode_datasets(
+            train_df=train_df,
+            test_df=test_df,
+            lemm=False, 
+            stemm=True)
+
+        # Split the train dataset into train and validation datasets
+        processed_data["train_df"]["num_task1"] = processed_data["encoded_train_labels"]
+        train_valid_dfs = train_test_split(
+            processed_data["train_df"], 
+            train_size=TRAIN_RATE, 
+            random_state=1) # Pass an integer to get duplicable results
+
+        # Save the procesed train dataset in a file
+        processed_train_df = pd.DataFrame(train_valid_dfs[0])
+        processed_train_df.to_csv(TRAIN_DF_PATH)
+
+        # Save the procesed validation dataset in a file
+        processed_valid_df = pd.DataFrame(train_valid_dfs[1])
+        processed_valid_df.to_csv(VALID_DF_PATH)
+
+        # Save the procesed test dataset in a file
+        processed_data["test_df"]["num_task1"] = processed_data["encoded_test_labels"]
+        processed_test_df = processed_data["test_df"]
+        processed_test_df.to_csv(TEST_DF_PATH)
+        
+        return {
+            "train_df": processed_train_df,
+            "valid_df": processed_valid_df,
+            "test_df": processed_test_df
+        }
 
 def to_bag_of_words(train_docs: list, test_docs: list):
     """

@@ -2,7 +2,6 @@
 
 OUTPUTS_DIR_PATH="outputs"
 
-
 # 1. Instala la librería 'virtualenv' 
 pip install virtualenv==20.17.0
 printf "Instalada la librería 'virtualenv' en el sistema.\n"

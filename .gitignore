@@ -133,3 +133,4 @@ venv/
 
 # Output folder
 outputs/
+embeddings/

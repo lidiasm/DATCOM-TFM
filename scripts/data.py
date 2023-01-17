@@ -27,6 +27,28 @@ def read_test_dataset():
     """
     return pd.read_table(EXIST_TEST_DATASET_PATH)
 
+def count_words(dataset: pd.DataFrame, text_column: str, 
+                tokenize: bool = False, unique_words: bool = False):
+    # Delete punctuation marks and split the docs into words
+    if (tokenize):
+        dataset[text_column] = [record.split(" ") for record in 
+            list(dataset[text_column].str.replace("[^\w\s]", ""))]
+    
+    # Variable to count (different) words
+    word_count = 0
+        
+    # Count different words in each doc
+    if (unique_words):
+        for doc in dataset[text_column]:
+            word_count += len(set(doc))
+        
+    # Count the number of words in each doc
+    else:
+        for doc in dataset[text_column]:
+            word_count += len(doc)
+
+    return word_count
+
 def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
     """
     Function that splits a set of texts into sentences 
@@ -102,11 +124,15 @@ def get_sentiments(dataset: pd.DataFrame, class_column: str, text_column: str):
             else "neu") for text in one_class_texts]
 
         # Compute the frequency of each sentiment
-        one_class_sentiment_frequencies = {sentiment:one_class_sentiments.count(sentiment) 
+        one_class_sentiment_frequencies = {
+            sentiment:one_class_sentiments.count(sentiment) 
             for sentiment in ["pos", "neg", "neu"]}
 
         # Sort the quantities in descending order
-        sentiment_freq_per_class[class_] = dict(sorted(one_class_sentiment_frequencies.items(), 
-                    key=lambda item: item[1], reverse=True))
+        sentiment_freq_per_class[class_] = dict(
+            sorted(
+                one_class_sentiment_frequencies.items(), 
+                key=lambda item: item[1], 
+            reverse=True))
 
     return sentiment_freq_per_class

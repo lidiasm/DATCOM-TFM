@@ -20,8 +20,8 @@ warnings.filterwarnings("ignore")
 nltk.download('stopwords')
 
 # Get the spanish and engish stopwords
-STOPWORDS = nltk.corpus.stopwords.words(
-    "spanish") + nltk.corpus.stopwords.words("english")
+STOPWORDS = nltk.corpus.stopwords.words("spanish") + \
+            nltk.corpus.stopwords.words("english")
 
 # Rate to split the train dataset into a train and a validation dataset
 TRAIN_RATE = 0.8
@@ -132,8 +132,9 @@ def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = [
     """
     STOPWORDS.extend(add_stopwords)
 
-    return dataset[column].apply(lambda x: " ".join(
-        [word for word in x.split() if word not in STOPWORDS and len(word) > 1]))
+    return dataset[column].apply(lambda x: " ".join([
+        word for word in x.split() if word not in STOPWORDS and len(word) > 1
+    ]))
 
 
 def delete_words_one_char(dataset: pd.DataFrame, column: str):
@@ -152,8 +153,9 @@ def delete_words_one_char(dataset: pd.DataFrame, column: str):
     -------
     A Series column
     """
-    return dataset[column].apply(lambda x: " ".join(
-        [word for word in x.split() if len(word) > 1]))
+    return dataset[column].apply(lambda x: " ".join([
+        word for word in x.split() if len(word) > 1
+    ]))
 
 
 def to_lowercase(dataset: pd.DataFrame, column: str):
@@ -587,7 +589,8 @@ def to_tf_idf(train_docs: list, test_docs: list):
 
 
 def to_word_2_vec(docs: list, vector_size: int = 100,
-                  window: int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+                  window: int = 5, min_count: int = 5, 
+                  epochs: int = 5, algorithm: int = 0):
     """
     Creates a Word2Vec model to train it using a provided list
     of documents with the goal of converting them into word
@@ -636,14 +639,17 @@ def to_word_2_vec(docs: list, vector_size: int = 100,
 
     # Normalize sentence vectors using the averaging of the word vectors
     # for each sentence in order to then be used in ML models
-    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
-            for sent in agg_sentences]
+    return [
+        sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
+        for sent in agg_sentences
+    ]
 
 
 def word2vec_pipeline(
         train_df: pd.DataFrame, train_text_col: str,
         test_df: pd.DataFrame, test_text_col: str,
-        vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
+        vector_size: int = 100, window: int = 5, min_count: int = 5, 
+        epochs: int = 5, alg: int = 0):
     """
     Creates a train and a test datasets based on the
     Word2Vec technique to encode a set of texts as word embeddings.
@@ -700,11 +706,13 @@ def word2vec_pipeline(
     # the new created columns
     train_w2v_df = pd.DataFrame(data=train_w2v_embeddings)
     train_w2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, train_w2v_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, train_w2v_df.shape[1])
+    ]
 
     test_w2v_df = pd.DataFrame(data=test_w2v_embeddings)
     test_w2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, test_w2v_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, test_w2v_df.shape[1])
+    ]
 
     return {
         "train": train_w2v_df,
@@ -713,7 +721,8 @@ def word2vec_pipeline(
 
 
 def to_doc_2_vec(docs: list, vector_size: int = 100,
-                 window: int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+                window: int = 5, min_count: int = 5, 
+                epochs: int = 5, algorithm: int = 0):
     """
     Creates a Doc2Vec model to train it using a provided list
     of documents with the goal of converting each word to embeddings along
@@ -759,20 +768,26 @@ def to_doc_2_vec(docs: list, vector_size: int = 100,
     d2v_vocab = set(d2v_model.wv.index_to_key)
 
     # Create aggregated sentence vectors based on the tokens and Word2Vec vocabulary
-    agg_sentences = np.array([np.array(
-        [d2v_model.wv[word] for word in doc if word in d2v_vocab])
-        for doc in tokens])
+    agg_sentences = np.array([
+            np.array([
+                d2v_model.wv[word] for word in doc if word in d2v_vocab
+            ])
+        for doc in tokens
+    ])
 
     # Normalize sentence vectors using the averaging of the word vectors
     # for each sentence in order to then be used in ML models
-    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
-            for sent in agg_sentences]
+    return [
+        sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
+        for sent in agg_sentences
+    ]
 
 
 def doc2vec_pipeline(
         train_df: pd.DataFrame, train_text_col: str,
         test_df: pd.DataFrame, test_text_col: str,
-        vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
+        vector_size: int = 100, window: int = 5, 
+        min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
     Creates a train and a test datasets based on the
     Doc2Vec technique to encode a set of texts as word and doc embeddings.
@@ -829,11 +844,13 @@ def doc2vec_pipeline(
     # the new created columns
     train_d2v_df = pd.DataFrame(data=train_d2v_embeddings)
     train_d2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, train_d2v_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, train_d2v_df.shape[1])
+    ]
 
     test_d2v_df = pd.DataFrame(data=test_d2v_embeddings)
     test_d2v_df.columns = [
-        f"Feature {index+1}" for index in range(0, test_d2v_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, test_d2v_df.shape[1])
+    ]
 
     return {
         "train": train_d2v_df,
@@ -842,7 +859,8 @@ def doc2vec_pipeline(
 
 
 def to_fast_text(docs: list, vector_size: int = 100,
-                 window: int = 5, min_count: int = 5, epochs: int = 5, algorithm: int = 0):
+                window: int = 5, min_count: int = 5, 
+                epochs: int = 5, algorithm: int = 0):
     """
     Creates a FastText model to train it using a provided list
     of documents with the goal of converting them into word
@@ -885,19 +903,25 @@ def to_fast_text(docs: list, vector_size: int = 100,
 
     # Create aggregated sentence vectors based on the tokens and FastText vocabulary
     agg_sentences = np.array([np.array(
-        [ft_model.wv[word] for word in doc if word in ft_vocab])
-        for doc in tokens])
+        [
+            ft_model.wv[word] for word in doc if word in ft_vocab
+        ])
+        for doc in tokens
+    ])
 
     # Normalize sentence vectors using the averaging of the word vectors
     # for each sentence in order to then be used in ML models
-    return [sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
-            for sent in agg_sentences]
+    return [
+        sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float)
+        for sent in agg_sentences
+    ]
 
 
 def fasttext_pipeline(
         train_df: pd.DataFrame, train_text_col: str,
         test_df: pd.DataFrame, test_text_col: str,
-        vector_size: int = 100, window: int = 5, min_count: int = 5, epochs: int = 5, alg: int = 0):
+        vector_size: int = 100, window: int = 5, 
+        min_count: int = 5, epochs: int = 5, alg: int = 0):
     """
     Creates a train and a test datasets based on the
     FastText technique to encode a set of texts as word embeddings.
@@ -954,11 +978,13 @@ def fasttext_pipeline(
     # the new created columns
     train_ft_df = pd.DataFrame(data=train_ft_embeddings)
     train_ft_df.columns = [
-        f"Feature {index+1}" for index in range(0, train_ft_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, train_ft_df.shape[1])
+    ]
 
     test_ft_df = pd.DataFrame(data=test_ft_embeddings)
     test_ft_df.columns = [
-        f"Feature {index+1}" for index in range(0, test_ft_df.shape[1])]
+        f"Feature {index+1}" for index in range(0, test_ft_df.shape[1])
+    ]
 
     return {
         "train": train_ft_df,
@@ -1016,34 +1042,48 @@ def trained_embeddings_pipeline(
     pretrained_vocab = set(pretrained_model.index_to_key)
 
     # Split the train and test documents into tokens
-    train_tokens = [doc.split(" ") for doc in list(
-        train_df[train_text_col].values)]
-    test_tokens = [doc.split(" ") for doc in list(
-        test_df[test_text_col].values)]
+    train_tokens = [
+        doc.split(" ") for doc in list(train_df[train_text_col].values)
+    ]
+    test_tokens = [
+        doc.split(" ") for doc in list(test_df[test_text_col].values)
+    ]
 
     # Create aggregated sentence vectors based on the tokens and the pre-trained vocabulary
     train_agg_sentences = np.array([np.array(
-        [pretrained_model[word] for word in doc if word in pretrained_vocab])
-        for doc in train_tokens])
+        [
+            pretrained_model[word] for word in doc if word in pretrained_vocab
+        ])
+        for doc in train_tokens
+    ])
     test_agg_sentences = np.array([np.array(
-        [pretrained_model[word] for word in doc if word in pretrained_vocab])
-        for doc in test_tokens])
+        [
+            pretrained_model[word] for word in doc if word in pretrained_vocab
+        ])
+        for doc in test_tokens
+    ])
 
     # Normalize sentence vectors using the averaging of the word vectors
     # for each sentence in order to then be used in ML models
-    train_avg_sentences = [sent.mean(axis=0) if sent.size else
-                              np.zeros(vector_size, dtype=float) for sent in train_agg_sentences]
-    test_avg_sentences = [sent.mean(axis=0) if sent.size else
-                             np.zeros(vector_size, dtype=float) for sent in test_agg_sentences]
+    train_avg_sentences = [
+        sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float) 
+        for sent in train_agg_sentences
+    ]
+    test_avg_sentences = [
+        sent.mean(axis=0) if sent.size else np.zeros(vector_size, dtype=float) 
+        for sent in test_agg_sentences
+    ]
 
     # Create a train and a test datasets with column names
     train_embeddings_df = pd.DataFrame(data=train_avg_sentences)
-    train_embeddings_df.columns = \
-        [f"Feature {index+1}" for index in range(0, train_embeddings_df.shape[1])]
+    train_embeddings_df.columns = [
+        f"Feature {index+1}" for index in range(0, train_embeddings_df.shape[1])
+    ]
 
     test_embeddings_df = pd.DataFrame(data=test_avg_sentences)
-    test_embeddings_df.columns = \
-        [f"Feature {index+1}" for index in range(0, test_embeddings_df.shape[1])]
+    test_embeddings_df.columns = [
+        f"Feature {index+1}" for index in range(0, test_embeddings_df.shape[1])
+    ]
 
     return {
         "train": train_embeddings_df,

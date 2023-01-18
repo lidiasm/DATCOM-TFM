@@ -1,6 +1,6 @@
 import pandas as pd
 import nltk
-from textblob import TextBlob
+from transformers import AutoTokenizer, AutoModelWithLMHead
 
 EXIST_TRAIN_DATASET_PATH = "../data/EXIST2021_train.tsv"
 EXIST_TEST_DATASET_PATH = "../data/EXIST2021_test.tsv"
@@ -31,8 +31,10 @@ def count_words(dataset: pd.DataFrame, text_column: str,
                 tokenize: bool = False, unique_words: bool = False):
     # Delete punctuation marks and split the docs into words
     if (tokenize):
-        dataset[text_column] = [record.split(" ") for record in 
-            list(dataset[text_column].str.replace("[^\w\s]", ""))]
+        dataset[text_column] = [
+            record.split(" ") for record in 
+            list(dataset[text_column].str.replace("[^\w\s]", ""))
+        ]
     
     # Variable to count (different) words
     word_count = 0
@@ -70,69 +72,126 @@ def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
     A Pandas dataframe
     """
     # Split texts in sentences of N words
-    dataset["ngrams"] = dataset[column].str \
-        .split() \
+    dataset["ngrams"] = dataset[column].str.split() \
         .apply(lambda x: list(map(" ".join, nltk.ngrams(x, n=n_words))))
 
     # Compute the frequency per sentece
-    return (dataset.\
-        assign(count=dataset["ngrams"].str.len()) \
-        .explode("ngrams")) \
+    return (dataset.assign(count=dataset["ngrams"]\
+        .str.len()).explode("ngrams")) \
         .sort_values("count", ascending=False)
 
-def get_sentiments(dataset: pd.DataFrame, class_column: str, text_column: str):
+def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
     """
-    Function that gets the sentiments of a set of text 
-    splitted by a class column. The main purpose of this
-    function is to know the number of positive, neutral 
-    and negative texts per class.
+    Function that downloads the tokenizer and a pre-trained model
+    to detect the emotions from a set of documents within a dataset.
+    The goal is to compute global metrics and specific calculations
+    per each class to summarize the number of texts that belong
+    to each available emotion.
 
     Parameters
     ----------
     dataset : Pandas dataframe
-        The data which contains a set of texts to get the
-        sentiments.
-    class_column : str
-        The column name which stores the class labels.
+        The data which contains a set of texts to analyze.
     text_column : str
-        The column name which stores the text to process.
+        The column name in which the set of texts is stored.
+    class_column : str
+        The column name in which the class labels are stored.
 
     Returns
     -------
-    None if there aren't any class labels
-    A dictionary with the sentiment frequencies per class
+    A dictionary with the global metrics as well as the calculations
+    per each class.
     """
-    # Dictionary to save the sentiment frequency per class
-    sentiment_freq_per_class = {}
+    # Download the tokenizer and the model for emotion detection from Hugging Face
+    tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
+    model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion")
 
-    # Get a list of unique class labels
-    unique_classes = list(set(list(dataset[class_column].values)))
+    # Variables to save the global results and the emotions per class
+    global_emotions = {
+        "sadness": 0,
+        "joy": 0,
+        "love": 0,
+        "anger": 0,
+        "fear": 0,
+        "surprise": 0,
+    }
+    class_emotions = {
+        "ideological-inequality": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        },
+        "misogyny-non-sexual-violence": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        },
+        "non-sexist": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        },
+        "objectification": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        },
+        "sexual-violence": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        },
+        "stereotyping-dominance": {
+            "sadness": 0,
+            "joy": 0,
+            "love": 0,
+            "anger": 0,
+            "fear": 0,
+            "surprise": 0,
+        }
+    }
 
-    # Iterate over the class labels
-    for class_ in unique_classes:
+    # Convert the dataset into a list of records
+    dataset_dict = dataset.to_dict("records")
 
-        # Get texts that belong to the current class
-        one_class_texts = list(dataset[dataset[class_column] == class_][text_column].values)
+    # Iterate over the documents within the dataset
+    for record in dataset_dict:
+        # Encode the input to pass it to the model to detect the emotion
+        model_output = model.generate(
+            input_ids=tokenizer.encode(
+                f"{record[text_column]}</s>", 
+                return_tensors="pt"),
+            max_length=2)
 
-        # Get the sentiment of each text
-        # - Positive if polarity > 0
-        # - Negative if polarity < 0
-        # - Neutral if polatiry = 0
-        one_class_sentiments = [
-            "pos" if TextBlob(text).polarity > 0 else (
-            "neg" if TextBlob(text).polarity < 0 
-            else "neu") for text in one_class_texts]
+        try:
+            # Decode the output returned by the model
+            decoded_output = [tokenizer.decode(ids) for ids in model_output]
+            detected_emotion = decoded_output[0][6:]
 
-        # Compute the frequency of each sentiment
-        one_class_sentiment_frequencies = {
-            sentiment:one_class_sentiments.count(sentiment) 
-            for sentiment in ["pos", "neg", "neu"]}
+            # Compute the results globally 
+            global_emotions[detected_emotion] += 1
 
-        # Sort the quantities in descending order
-        sentiment_freq_per_class[class_] = dict(
-            sorted(
-                one_class_sentiment_frequencies.items(), 
-                key=lambda item: item[1], 
-            reverse=True))
-
-    return sentiment_freq_per_class
+            # Compute the results per class
+            class_emotions[record[class_column]][detected_emotion] += 1
+        except:
+            pass
+    
+    return {
+        "global_emotions": global_emotions,
+        "class_emotions": class_emotions
+    }

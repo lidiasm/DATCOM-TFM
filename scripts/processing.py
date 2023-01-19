@@ -137,10 +137,10 @@ def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = [
     ]))
 
 
-def delete_words_one_char(dataset: pd.DataFrame, column: str):
+def delete_wrong_words(dataset: pd.DataFrame, column: str):
     """
-    Removes words composed of one letter within
-    a set of texts.
+    Removes words composed of one letter or of only consonants
+    without vowels within a set of texts.
 
     Parameters
     ----------
@@ -151,12 +151,12 @@ def delete_words_one_char(dataset: pd.DataFrame, column: str):
 
     Returns
     -------
-    A Series column
+    A Series column with the processed text
     """
+    vowset = set(["a", "e", "i", "o", "u"])
     return dataset[column].apply(lambda x: " ".join([
-        word for word in x.split() if len(word) > 1
+        word for word in x.split() if len(word) > 1 and len(vowset.intersection(word)) > 0
     ]))
-
 
 def to_lowercase(dataset: pd.DataFrame, column: str):
     """
@@ -333,7 +333,7 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         add_stopwords=add_stopwords)
 
     # Delete one-char words
-    dataset[cleaned_col] = delete_words_one_char(
+    dataset[cleaned_col] = delete_wrong_words(
         dataset=dataset, 
         column=cleaned_col)
 

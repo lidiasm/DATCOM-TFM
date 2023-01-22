@@ -134,3 +134,6 @@ venv/
 # Output folder
 outputs/
 embeddings/
+
+# Experiment scripts
+scripts/run_experiments.py

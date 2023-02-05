@@ -414,7 +414,7 @@ def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
 
 def process_encode_datasets(
     train_df: pd.DataFrame, test_df: pd.DataFrame,
-    lemm: bool, stemm: bool):
+    lemm: bool, stemm: bool, correct_words: bool):
     """
     Processes the sets of train and test documents
     and encodes the class labels of both datasets to convert
@@ -430,6 +430,8 @@ def process_encode_datasets(
         True to lemmatize the texts, False to not apply it.
     stemm : bool
         True to apply stemming to the texts, False to not apply it.
+    correct_words : bool
+        True to detect and correct misspelled words, False to not apply it.
 
     Returns
     -------
@@ -452,14 +454,14 @@ def process_encode_datasets(
             lemm=lemm,
             stemm=stemm, 
             language_col="language",
-            correct_words=True),
+            correct_words=correct_words),
         "test_df":text_processing_pipeline(
             dataset=test_df, 
             text_col="text", 
             lemm=lemm,
             stemm=stemm, 
             language_col="language",
-            correct_words=True),
+            correct_words=correct_words),
         "encoded_train_labels": to_numeric_labels(
             dataset=train_df, 
             column="task1", 
@@ -511,7 +513,8 @@ def get_train_valid_test_df(train_df: pd.DataFrame, test_df: pd.DataFrame):
             train_df=train_df,
             test_df=test_df,
             lemm=False, 
-            stemm=True)
+            stemm=True,
+            correct_words=True)
 
         # Split the train dataset into train and validation datasets
         processed_data["train_df"]["num_task1"] = processed_data["encoded_train_labels"]

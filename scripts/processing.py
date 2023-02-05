@@ -12,6 +12,7 @@ from gensim.models import Word2Vec, FastText
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
 import gensim.downloader as api
 from sklearn.model_selection import train_test_split
+from autocorrect import Speller
 
 # Ignore regex warnins
 warnings.filterwarnings("ignore")
@@ -69,27 +70,6 @@ def delete_mentioned_users(dataset: pd.DataFrame, column: str):
     return dataset[column].str.replace(
         pat="@([a-zA-Z0-9_]{1,50})",
         repl="")
-
-
-def delete_hashtags(dataset: pd.DataFrame, column: str):
-    """
-    Removes hashtags and their content from a set of text.
-
-    Parameters
-    ----------
-    dataset : Pandas dataframe
-        The data which contains a set of texts.
-    column : str
-        The column name in which the set of texts is stored.
-
-    Returns
-    -------
-    A Series column
-    """
-    return dataset[column].str.replace(
-        pat="#([a-zA-Z0-9_]{1,50})", 
-        repl="")
-
 
 def delete_non_alphabetic_chars(dataset: pd.DataFrame, column: str):
     """
@@ -175,6 +155,36 @@ def to_lowercase(dataset: pd.DataFrame, column: str):
     A Series column
     """
     return dataset[column].str.lower()
+
+def correct_misspelled_words(dataset: pd.DataFrame, text_col: str, language_col: str):
+    """
+    Detects possible misspelled words within a set of texts, only in English
+    and Spanish, to then replaces them with the right words. Texts should be 
+    stored in a column of a provided dataframe.
+
+    Parameters
+    ----------
+    dataset : Pandas dataframe
+        The data which contains a set of texts.
+    text_col : str
+        The column name in which the set of texts is stored.
+    language_col : str
+        The column name in which the languages of the texts are stored.
+
+    Returns
+    -------
+    A Series column
+    """
+    en_speller = Speller()
+    es_speller = Speller("es")
+
+    en_dataset = dataset[dataset[language_col] == "en"]
+    es_dataset = dataset[dataset[language_col] == "es"]
+
+    en_dataset[text_col] = en_dataset[text_col].apply(lambda x: en_speller(x))
+    es_dataset[text_col] = es_dataset[text_col].apply(lambda x: es_speller(x))
+
+    return pd.concat([en_dataset, es_dataset])[text_col]
 
 
 def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str, language_col: str):
@@ -267,11 +277,10 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, language_col: str):
 
     return stemm_texts
 
-
 def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
                             add_stopwords: list = [],
                             lemm: bool = False, stemm: bool = False, 
-                            language_col: str = ""):
+                            language_col: str = "", correct_words=False):
     """
     Applies the next text processing techniques to a text
     column in a dataset. 
@@ -283,6 +292,7 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         - Removes stopwords from english and spanish texts.
         - Removes one-size words from texts.
         - Converts characters to lowercase.
+        - Replaces misspelled words with the right ones. Only English and Spanish.
 
     Parameters
     ----------
@@ -298,6 +308,8 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         True to apply stemming to the texts, False to not apply it.
     language_col : str
         The column name in which the text languages are stored.
+    correct_words : bool
+        True to detect and correct misspelled words, False to not do it.
 
     Returns
     -------
@@ -313,11 +325,6 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
 
     # Delete mentioned users in tweets
     dataset[cleaned_col] = delete_mentioned_users(
-        dataset=dataset, 
-        column=cleaned_col)
-
-    # Delete hashtags in tweets
-    dataset[cleaned_col] = delete_hashtags(
         dataset=dataset, 
         column=cleaned_col)
 
@@ -341,6 +348,13 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
     dataset[cleaned_col] = to_lowercase(
         dataset=dataset, 
         column=cleaned_col)
+  
+    # Correct misspelled words
+    if (correct_words and type(language_col) == str and language_col != ""):
+      dataset[cleaned_col] = correct_misspelled_words(
+        dataset=dataset, 
+        text_col=cleaned_col,
+        language_col=language_col)
 
     # Lemmatize the texts
     if (lemm and type(language_col) == str and language_col != ""):
@@ -357,7 +371,6 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
             language_col=language_col)
 
     return dataset
-
 
 def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
     """
@@ -438,13 +451,15 @@ def process_encode_datasets(
             text_col="text", 
             lemm=lemm,
             stemm=stemm, 
-            language_col="language"),
+            language_col="language",
+            correct_words=True),
         "test_df":text_processing_pipeline(
             dataset=test_df, 
             text_col="text", 
             lemm=lemm,
             stemm=stemm, 
-            language_col="language"),
+            language_col="language",
+            correct_words=True),
         "encoded_train_labels": to_numeric_labels(
             dataset=train_df, 
             column="task1", 

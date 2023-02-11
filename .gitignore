@@ -134,3 +134,8 @@ venv/
 # Output folder
 outputs/
 embeddings/
+
+# Embedding folders
+en_embeddings
+es_embeddings
+en_es_embeddings

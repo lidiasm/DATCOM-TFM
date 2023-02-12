@@ -19,15 +19,8 @@ nltk.download('stopwords')
 STOPWORDS = nltk.corpus.stopwords.words('spanish') + \
             nltk.corpus.stopwords.words('english')
 
-# Rate to split the train dataset into a train and a validation dataset
-TRAIN_RATE = 0.8
 
-# Paths to the processed train, validation and test datasets
-TRAIN_DF_PATH = '../data/proc_EXIST2021_train.csv'
-VALID_DF_PATH = '../data/proc_EXIST2021_valid.csv'
-TEST_DF_PATH = '../data/proc_EXIST2021_test.csv'
-
-def delete_urls(dataset: pd.DataFrame, column: str):
+def delete_urls(dataset: pd.DataFrame, text_col: str):
     '''
     Removes URLs and web links from a set of text.
 
@@ -35,19 +28,19 @@ def delete_urls(dataset: pd.DataFrame, column: str):
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
 
     Returns
     -------
     A Series column
     '''
-    return dataset[column].apply(lambda x: re.split(
+    return dataset[text_col].apply(lambda x: re.split(
         pattern='https:\/\/.*',
         string=str(x))[0])
 
 
-def delete_mentioned_users(dataset: pd.DataFrame, column: str):
+def delete_mentioned_users(dataset: pd.DataFrame, text_col: str):
     '''
     Removes mentioned users from a set of text.
 
@@ -55,19 +48,19 @@ def delete_mentioned_users(dataset: pd.DataFrame, column: str):
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
 
     Returns
     -------
     A Series column
     '''
-    return dataset[column].str.replace(
+    return dataset[text_col].str.replace(
         pat='@([a-zA-Z0-9_]{1,50})',
         repl='')
 
 
-def delete_non_alphabetic_chars(dataset: pd.DataFrame, column: str):
+def delete_non_alphabetic_chars(dataset: pd.DataFrame, text_col: str):
     '''
     Removes non-alphabetic characters (special characters,
     digits, ...) from a set of text.
@@ -76,19 +69,19 @@ def delete_non_alphabetic_chars(dataset: pd.DataFrame, column: str):
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
 
     Returns
     -------
     A Series column
     '''
-    return dataset[column].str.replace(
+    return dataset[text_col].str.replace(
         pat='[^a-zA-Z ]', 
         repl='')
 
 
-def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = []):
+def delete_stopwords(dataset: pd.DataFrame, text_col: str, add_stopwords: list = []):
     '''
     Removes stopwords from a set of english and
     spanish texts using the NLTK stopword list.
@@ -97,7 +90,7 @@ def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = [
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
     add_stopwords : list
         A list of additional stopwords to exclude.
@@ -108,12 +101,12 @@ def delete_stopwords(dataset: pd.DataFrame, column: str, add_stopwords: list = [
     '''
     STOPWORDS.extend(add_stopwords)
 
-    return dataset[column].apply(lambda x: ' '.join([
+    return dataset[text_col].apply(lambda x: ' '.join([
         word for word in x.split() if word not in STOPWORDS and len(word) > 1
     ]))
 
 
-def delete_wrong_words(dataset: pd.DataFrame, column: str):
+def delete_wrong_words(dataset: pd.DataFrame, text_col: str):
     '''
     Removes words composed of one letter or of only consonants
     without vowels within a set of texts.
@@ -122,7 +115,7 @@ def delete_wrong_words(dataset: pd.DataFrame, column: str):
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
 
     Returns
@@ -130,12 +123,12 @@ def delete_wrong_words(dataset: pd.DataFrame, column: str):
     A Series column with the processed text
     '''
     vowset = set(['a', 'e', 'i', 'o', 'u'])
-    return dataset[column].apply(lambda x: ' '.join([
+    return dataset[text_col].apply(lambda x: ' '.join([
         word for word in x.split() if len(word) > 1 and len(vowset.intersection(word)) > 0
     ]))
 
 
-def to_lowercase(dataset: pd.DataFrame, column: str):
+def to_lowercase(dataset: pd.DataFrame, text_col: str):
     '''
     Converts all characters to lowercase within
     a set of text.
@@ -144,17 +137,17 @@ def to_lowercase(dataset: pd.DataFrame, column: str):
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    column : str
+    text_col : str
         The column name in which the set of texts is stored.
 
     Returns
     -------
     A Series column
     '''
-    return dataset[column].str.lower()
+    return dataset[text_col].str.lower()
 
 
-def correct_misspelled_words(dataset: pd.DataFrame, text_col: str, lang_col: str):
+def correct_misspelled_words(dataset: pd.DataFrame, text_col: str):
     '''
     Detects possible misspelled words within a set of texts, only in English
     and Spanish, to then replaces them with the right words. Texts should be 
@@ -166,8 +159,6 @@ def correct_misspelled_words(dataset: pd.DataFrame, text_col: str, lang_col: str
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
-    lang_col : str
-        The column name in which the languages of the texts are stored.
 
     Returns
     -------
@@ -176,8 +167,8 @@ def correct_misspelled_words(dataset: pd.DataFrame, text_col: str, lang_col: str
     en_speller = Speller()
     es_speller = Speller('es')
 
-    en_dataset = dataset[dataset[lang_col] == 'en']
-    es_dataset = dataset[dataset[lang_col] == 'es']
+    en_dataset = dataset[dataset['language'] == 'en']
+    es_dataset = dataset[dataset['language'] == 'es']
 
     en_dataset[text_col] = en_dataset[text_col].apply(lambda x: en_speller(x))
     es_dataset[text_col] = es_dataset[text_col].apply(lambda x: es_speller(x))
@@ -185,7 +176,7 @@ def correct_misspelled_words(dataset: pd.DataFrame, text_col: str, lang_col: str
     return pd.concat([en_dataset, es_dataset])[text_col]
 
 
-def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
+def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str):
     '''
     Iterates over a set of documents in order to replace 
     each verb with its infinitive form and each word with 
@@ -198,8 +189,6 @@ def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
         The data which contains a set of texts to lemmatize.
     text_col : str
         The column name in which the set of texts is stored.
-    lang_col : str
-        The column name which stores the language of each text.
 
     Returns
     -------
@@ -216,7 +205,7 @@ def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
     for record in dataset.to_records('dict'):
 
         # Select the lemmatizer depending on the text language
-        lemmatizer = en_lemmatizer if record[lang_col] == 'en' else es_lemmatizer
+        lemmatizer = en_lemmatizer if record['language'] == 'en' else es_lemmatizer
 
         # String to save the current text when it's lemmatized
         current_lemm_text = ''
@@ -231,7 +220,7 @@ def to_lemmatized_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
     return lemm_texts
 
 
-def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
+def to_stemmed_texts(dataset: pd.DataFrame, text_col: str):
     '''
     Iterates over a set of documents in order to replace each
     word with its root form. The stemmer to apply depends on the 
@@ -243,8 +232,6 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
-    lang_col : str
-        The column name which stores the language of each text.
 
     Returns
     -------
@@ -261,7 +248,7 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
     for record in dataset.to_records('dict'):
 
         # Select the stemmer depending on the text language
-        stemmer = en_stemmer if record[lang_col] == 'en' else es_stemmer
+        stemmer = en_stemmer if record['language'] == 'en' else es_stemmer
 
         # String to save the current text when it's stemmed
         current_stemm_text = ''
@@ -277,9 +264,8 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str, lang_col: str):
 
 
 def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
-                            add_stopwords: list = [],
-                            lemm: bool = False, stemm: bool = False, 
-                            lang_col: str = '', correct_words=False):
+    add_stopwords: list = [], lemm: bool = False, 
+    stemm: bool = False, correct_words=False):
     '''
     Applies the next text processing techniques to a text
     column in a dataset. 
@@ -305,8 +291,6 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         True to lemmatize the texts, False to not apply it.
     stemm : bool
         True to apply stemming to the texts, False to not apply it.
-    lang_col : str
-        The column name in which the text languages are stored.
     correct_words : bool
         True to detect and correct misspelled words, False to not do it.
 
@@ -349,30 +333,27 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         column=cleaned_col)
   
     # Correct misspelled words
-    if (correct_words and type(lang_col) == str and lang_col != ''):
+    if (correct_words and type('language') == str and 'language' != ''):
       dataset[cleaned_col] = correct_misspelled_words(
         dataset=dataset, 
-        text_col=cleaned_col,
-        lang_col=lang_col)
+        text_col=cleaned_col)
 
     # Lemmatize the texts
-    if (lemm and type(lang_col) == str and lang_col != ''):
+    if (lemm and type('language') == str and 'language' != ''):
         dataset[cleaned_col] = to_lemmatized_texts(
             dataset=dataset, 
-            text_col=cleaned_col, 
-            lang_col=lang_col)
+            text_col=cleaned_col)
 
     # Text stemming
-    if (stemm and type(lang_col) == str and lang_col != ''):
+    if (stemm and type('language') == str and 'language' != ''):
         dataset[cleaned_col] = to_stemmed_texts(
             dataset=dataset, 
-            text_col=cleaned_col, 
-            lang_col=lang_col)
+            text_col=cleaned_col)
 
     return dataset
 
 
-def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
+def to_numeric_labels(dataset: pd.DataFrame, class_col: str, encoding: dict = {}):
     '''
     Replaces categorical labels stored in a specific column within
     a dataset with the provided list of numeric values or creating
@@ -382,7 +363,7 @@ def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
     ----------
     dataset : Pandas dataframe
         A dataset which contains the class labels to encode.
-    column : str
+    class_col : str
         The column name in which the class labels are stored.
     encoding : dict (optional)
         A dictionary which contains the categorical labels and
@@ -398,14 +379,14 @@ def to_numeric_labels(dataset: pd.DataFrame, column: str, encoding: dict = {}):
     '''
     if len(encoding) > 0:
         # Replace the categorical labels with the numeric labels
-        return [encoding[val] for val in list(dataset[column].values)]
+        return [encoding[val] for val in list(dataset[class_col].values)]
 
     else:
         # Create a new encoder
         encoder = preprocessing.LabelEncoder()
 
         # Encode the categorical values to numeric
-        encoded_values = encoder.fit(y=list(dataset[column].values))
+        encoded_values = encoder.fit(y=list(dataset[class_col].values))
 
         return {
             'values': encoded_values,
@@ -454,14 +435,12 @@ def process_encode_datasets(
             text_col='text', 
             lemm=lemm,
             stemm=stemm, 
-            lang_col='language',
             correct_words=correct_words),
         'test_df':text_processing_pipeline(
             dataset=test_df, 
             text_col='text', 
             lemm=lemm,
             stemm=stemm, 
-            lang_col='language',
             correct_words=correct_words),
         'encoded_train_labels': to_numeric_labels(
             dataset=train_df, 
@@ -472,76 +451,3 @@ def process_encode_datasets(
             column='task1', 
             encoding=encoding)
     }
-
-
-def get_train_valid_test_df(train_df: pd.DataFrame, test_df: pd.DataFrame):
-    '''
-    Process the train and test datasets and encode the class
-    labels as numeric values returning a train dataset splitted
-    into 80% for training and 20% for validation, as well as the
-    entire test dataset. 
-    This function will be used to build LSTM models using Pytorch library.
-
-    Parameters
-    ----------
-    train_df : Pandas dataframe
-        A dataset which contains the train samples.
-    test_df : Pandas dataframe
-        A dataset which contains the test samples.
-
-    Returns
-    -------
-    A dictionary with the processed data and the encoded labels.
-        - 'train_df': a Pandas dataframe with the 80% of processed train texts.
-        - 'valid_df': a Pandas dataframe with the 20% of processed train texts.
-        - 'test_df': a Pandas dataframe with the 100% of processed test texts.
-    '''
-    # Read the train, validation and test datasets if they
-    # are contained in files
-    if (os.path.exists(TRAIN_DF_PATH) and 
-        os.path.exists(VALID_DF_PATH) and 
-        os.path.exists(TEST_DF_PATH)):
-        return {
-            'train_df': pd.read_csv(TRAIN_DF_PATH),
-            'valid_df': pd.read_csv(VALID_DF_PATH),
-            'test_df': pd.read_csv(TEST_DF_PATH)
-        }
-
-    # Create the train, validation and test datasets to then
-    # save them in files
-    else:
-        # Process documents and encode class labels as numeric labels
-        processed_data = process_encode_datasets(
-            train_df=train_df,
-            test_df=test_df,
-            lemm=False, 
-            stemm=True,
-            correct_words=True)
-
-        # Split the train dataset into train and validation datasets
-        processed_data['train_df']['num_task1'] = processed_data['encoded_train_labels']
-        train_valid_dfs = train_test_split(
-            processed_data['train_df'], 
-            train_size=TRAIN_RATE, 
-            random_state=1) # Pass an integer to get duplicable results
-
-        # Save the procesed train dataset in a file
-        processed_train_df = pd.DataFrame(train_valid_dfs[0])
-        processed_train_df.to_csv(TRAIN_DF_PATH)
-
-        # Save the procesed validation dataset in a file
-        processed_valid_df = pd.DataFrame(train_valid_dfs[1])
-        processed_valid_df.to_csv(VALID_DF_PATH)
-
-        # Save the procesed test dataset in a file
-        processed_data['test_df']['num_task1'] = processed_data['encoded_test_labels']
-        processed_test_df = processed_data['test_df']
-        processed_test_df.to_csv(TEST_DF_PATH)
-        
-        return {
-            'train_df': processed_train_df,
-            'valid_df': processed_valid_df,
-            'test_df': processed_test_df
-        }
-        
-

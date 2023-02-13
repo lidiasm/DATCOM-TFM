@@ -48,10 +48,14 @@ def translate_english_spanish_texts(dataset: pd.DataFrame, text_col: str):
 def apply_easy_data_augmentation(dataset: pd.DataFrame, text_col: str, 
                                 n_replacements: int, n_times: int):
     '''
-    Searchs for N synonyms to replace the N original words 
-    for N times in order to augment the number of texts 
-    stored within a provided dataset. It is a data augmentation
-    technique for NLP problems known as EDA (Easy Data Augmentation)
+    Applies different data augmentation technique to create new samples
+    from the provided set of texts.
+        * Searchs for N synonums to replace the original words with them.
+        * Deletes a specific quantity of words randomly.
+        * Swaps the location of some words randomly.
+        * Inserts a synonim of a random word in a random position.
+    
+    All this techniques can be applied the provided number of times.
     ONLY FOR ENGLISH TEXTS.
 
     Parameters
@@ -89,6 +93,14 @@ def apply_easy_data_augmentation(dataset: pd.DataFrame, text_col: str,
             aug_texts.append(text_aug_obj.synonym_replacement(
                 sentence=text, 
                 n=n_replacements))
+            
+            aug_texts.append(text_aug_obj.random_deletion(
+                sentence=text, 
+                p=0.2))
+            
+            aug_texts.append(text_aug_obj.random_swap(text))
+            
+            aug_texts.append(text_aug_obj.random_insertion(text))
     
     return aug_texts
 

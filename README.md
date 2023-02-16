@@ -22,3 +22,5 @@ La gran mayoría de las soluciones implementadas por los participantes en sendas
 
 ### Tecnologías
 
+* **Python** como lenguaje de programación.
+* **Keras** para el entrenamiento y validación de modelos con arquitecturas LSTM y BiLSTM.

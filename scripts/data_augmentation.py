@@ -6,6 +6,7 @@ from deep_translator import GoogleTranslator
 import nltk  
 nltk.download('omw-1.4')
 
+
 def translate_english_spanish_texts(dataset: pd.DataFrame, text_col: str):
     '''
     Translates english texts to spanish and spanish texts to

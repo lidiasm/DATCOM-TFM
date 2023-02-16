@@ -2,38 +2,60 @@ import pandas as pd
 import nltk
 from transformers import AutoTokenizer, AutoModelWithLMHead
 
-EXIST_TRAIN_DATASET_PATH = "../data/EXIST2021_train.tsv"
-EXIST_TEST_DATASET_PATH = "../data/EXIST2021_test.tsv"
+EXIST_TRAIN_DATASET_PATH = '../data/EXIST2021_train.tsv'
+EXIST_TEST_DATASET_PATH = '../data/EXIST2021_test.tsv'
+
 
 def read_train_dataset():
-    """
+    '''
     Function that reads the EXIST train file to load the 
     train dataset as dataframe.
 
     Returns
     -------
     A Pandas dataframe
-    """
+    '''
     return pd.read_table(EXIST_TRAIN_DATASET_PATH)
 
 def read_test_dataset():
-    """
+    '''
     Function that reads the EXIST test file to load the 
     test dataset as dataframe.
 
     Returns
     -------
     A Pandas dataframe
-    """
+    '''
     return pd.read_table(EXIST_TEST_DATASET_PATH)
 
 def count_words(dataset: pd.DataFrame, text_column: str, 
                 tokenize: bool = False, unique_words: bool = False):
+    '''
+    Function that computes the total number of words or just the number
+    of unique words within a provided set of documents tokenizing
+    them if specified.
+
+    Parameters
+    ----------
+    dataset : Pandas dataframe
+        The data which contains a set of texts.
+    text_column : str
+        The column name in which the set of texts is stored.
+    tokenize : bool (optional, default False)
+        True to split the documents into words without whitespaces
+        and punctuation marks.
+    unique_words : bool (optional, default False)
+        True to only count unique words, False to take into account all of them.
+
+    Returns
+    -------
+    An integer with the total number of words.
+    '''
     # Delete punctuation marks and split the docs into words
     if (tokenize):
         dataset[text_column] = [
-            record.split(" ") for record in 
-            list(dataset[text_column].str.replace("[^\w\s]", ""))
+            record.split(' ') for record in 
+            list(dataset[text_column].str.replace('[^\w\s]', ''))
         ]
     
     # Variable to count (different) words
@@ -52,7 +74,7 @@ def count_words(dataset: pd.DataFrame, text_column: str,
     return word_count
 
 def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
-    """
+    '''
     Function that splits a set of texts into sentences 
     of N words (N-grams) to then calculate the frequency 
     of the phrases in the entire set.
@@ -70,18 +92,18 @@ def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
     Returns
     -------
     A Pandas dataframe
-    """
+    '''
     # Split texts in sentences of N words
-    dataset["ngrams"] = dataset[column].str.split() \
-        .apply(lambda x: list(map(" ".join, nltk.ngrams(x, n=n_words))))
+    dataset['ngrams'] = dataset[column].str.split() \
+        .apply(lambda x: list(map(' '.join, nltk.ngrams(x, n=n_words))))
 
     # Compute the frequency per sentece
-    return (dataset.assign(count=dataset["ngrams"]\
-        .str.len()).explode("ngrams")) \
-        .sort_values("count", ascending=False)
+    return (dataset.assign(count=dataset['ngrams']\
+        .str.len()).explode('ngrams')) \
+        .sort_values('count', ascending=False)
 
 def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
-    """
+    '''
     Function that downloads the tokenizer and a pre-trained model
     to detect the emotions from a set of documents within a dataset.
     The goal is to compute global metrics and specific calculations
@@ -101,81 +123,81 @@ def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
     -------
     A dictionary with the global metrics as well as the calculations
     per each class.
-    """
+    '''
     # Download the tokenizer and the model for emotion detection from Hugging Face
-    tokenizer = AutoTokenizer.from_pretrained("mrm8488/t5-base-finetuned-emotion")
-    model = AutoModelWithLMHead.from_pretrained("mrm8488/t5-base-finetuned-emotion")
+    tokenizer = AutoTokenizer.from_pretrained('mrm8488/t5-base-finetuned-emotion')
+    model = AutoModelWithLMHead.from_pretrained('mrm8488/t5-base-finetuned-emotion')
 
     # Variables to save the global results and the emotions per class
     global_emotions = {
-        "sadness": 0,
-        "joy": 0,
-        "love": 0,
-        "anger": 0,
-        "fear": 0,
-        "surprise": 0,
+        'sadness': 0,
+        'joy': 0,
+        'love': 0,
+        'anger': 0,
+        'fear': 0,
+        'surprise': 0,
     }
     class_emotions = {
-        "ideological-inequality": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'ideological-inequality': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         },
-        "misogyny-non-sexual-violence": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'misogyny-non-sexual-violence': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         },
-        "non-sexist": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'non-sexist': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         },
-        "objectification": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'objectification': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         },
-        "sexual-violence": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'sexual-violence': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         },
-        "stereotyping-dominance": {
-            "sadness": 0,
-            "joy": 0,
-            "love": 0,
-            "anger": 0,
-            "fear": 0,
-            "surprise": 0,
+        'stereotyping-dominance': {
+            'sadness': 0,
+            'joy': 0,
+            'love': 0,
+            'anger': 0,
+            'fear': 0,
+            'surprise': 0,
         }
     }
 
     # Convert the dataset into a list of records
-    dataset_dict = dataset.to_dict("records")
+    dataset_dict = dataset.to_dict('records')
 
     # Iterate over the documents within the dataset
     for record in dataset_dict:
         # Encode the input to pass it to the model to detect the emotion
         model_output = model.generate(
             input_ids=tokenizer.encode(
-                f"{record[text_column]}</s>", 
-                return_tensors="pt"),
+                f'{record[text_column]}</s>', 
+                return_tensors='pt'),
             max_length=2)
 
         try:
@@ -192,6 +214,6 @@ def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
             pass
     
     return {
-        "global_emotions": global_emotions,
-        "class_emotions": class_emotions
+        'global_emotions': global_emotions,
+        'class_emotions': class_emotions
     }

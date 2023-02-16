@@ -1,13 +1,11 @@
-import os
 import re
 import nltk
 import spacy
 import warnings
 import pandas as pd
+from autocorrect import Speller
 from sklearn import preprocessing
 from nltk.stem.snowball import SnowballStemmer
-from sklearn.model_selection import train_test_split
-from autocorrect import Speller
 
 # Ignore regex warnins
 warnings.filterwarnings('ignore')
@@ -92,7 +90,7 @@ def delete_stopwords(dataset: pd.DataFrame, text_col: str, add_stopwords: list =
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
-    add_stopwords : list
+    add_stopwords : list (optional, default empty list)
         A list of additional stopwords to exclude.
 
     Returns
@@ -285,13 +283,13 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
-    add_stopwords : list
+    add_stopwords : list (optional, default empty list)
         A list of additional stopwords to exclude.
-    lemm : bool
+    lemm : bool (optional, default False)
         True to lemmatize the texts, False to not apply it.
-    stemm : bool
+    stemm : bool (optional, default False)
         True to apply stemming to the texts, False to not apply it.
-    correct_words : bool
+    correct_words : bool (optional, default False)
         True to detect and correct misspelled words, False to not do it.
 
     Returns
@@ -304,33 +302,33 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
     # Delete URLs
     dataset[cleaned_col] = delete_urls(
         dataset=dataset, 
-        column=text_col)
+        text_col=text_col)
 
     # Delete mentioned users in tweets
     dataset[cleaned_col] = delete_mentioned_users(
         dataset=dataset, 
-        column=cleaned_col)
+        text_col=cleaned_col)
 
     # Delete non-alphabetic characters
     dataset[cleaned_col] = delete_non_alphabetic_chars(
         dataset=dataset, 
-        column=cleaned_col)
+        text_col=cleaned_col)
 
     # Delete stopwords for spanish and english texts
     dataset[cleaned_col] = delete_stopwords(
         dataset=dataset, 
-        column=cleaned_col,
+        text_col=cleaned_col,
         add_stopwords=add_stopwords)
 
     # Delete one-char words
     dataset[cleaned_col] = delete_wrong_words(
         dataset=dataset, 
-        column=cleaned_col)
+        text_col=cleaned_col)
 
     # Convert each character to lowercase
     dataset[cleaned_col] = to_lowercase(
         dataset=dataset, 
-        column=cleaned_col)
+        text_col=cleaned_col)
   
     # Correct misspelled words
     if (correct_words and type('language') == str and 'language' != ''):
@@ -365,7 +363,7 @@ def to_numeric_labels(dataset: pd.DataFrame, class_col: str, encoding: dict = {}
         A dataset which contains the class labels to encode.
     class_col : str
         The column name in which the class labels are stored.
-    encoding : dict (optional)
+    encoding : dict (optional, default empty dict)
         A dictionary which contains the categorical labels and
         their numeric labels associated.
 
@@ -444,10 +442,10 @@ def process_encode_datasets(
             correct_words=correct_words),
         'encoded_train_labels': to_numeric_labels(
             dataset=train_df, 
-            column='task1', 
+            class_col='task1', 
             encoding=encoding),
         'encoded_test_labels': to_numeric_labels(
             dataset=test_df, 
-            column='task1', 
+            class_col='task1', 
             encoding=encoding)
     }

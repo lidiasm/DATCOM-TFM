@@ -1,9 +1,9 @@
-import pandas as pd 
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 import numpy as np
+import pandas as pd 
+import gensim.downloader as api
 from gensim.models import Word2Vec, FastText
 from gensim.models.doc2vec import TaggedDocument, Doc2Vec
-import gensim.downloader as api
+from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 
 
 def to_bag_of_words(train_docs: list, test_docs: list):

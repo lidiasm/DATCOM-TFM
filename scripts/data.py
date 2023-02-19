@@ -17,6 +17,7 @@ def read_train_dataset():
     '''
     return pd.read_table(EXIST_TRAIN_DATASET_PATH)
 
+
 def read_test_dataset():
     '''
     Function that reads the EXIST test file to load the 
@@ -28,7 +29,8 @@ def read_test_dataset():
     '''
     return pd.read_table(EXIST_TEST_DATASET_PATH)
 
-def count_words(dataset: pd.DataFrame, text_column: str, 
+
+def count_words(dataset: pd.DataFrame, text_col: str, 
                 tokenize: bool = False, unique_words: bool = False):
     '''
     Function that computes the total number of words or just the number
@@ -39,7 +41,7 @@ def count_words(dataset: pd.DataFrame, text_column: str,
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts.
-    text_column : str
+    text_col : str
         The column name in which the set of texts is stored.
     tokenize : bool (optional, default False)
         True to split the documents into words without whitespaces
@@ -53,9 +55,9 @@ def count_words(dataset: pd.DataFrame, text_column: str,
     '''
     # Delete punctuation marks and split the docs into words
     if (tokenize):
-        dataset[text_column] = [
+        dataset[text_col] = [
             record.split(' ') for record in 
-            list(dataset[text_column].str.replace('[^\w\s]', ''))
+            list(dataset[text_col].str.replace('[^\w\s]', ''))
         ]
     
     # Variable to count (different) words
@@ -63,12 +65,12 @@ def count_words(dataset: pd.DataFrame, text_column: str,
         
     # Count different words in each doc
     if (unique_words):
-        for doc in dataset[text_column]:
+        for doc in dataset[text_col]:
             word_count += len(set(doc))
         
     # Count the number of words in each doc
     else:
-        for doc in dataset[text_column]:
+        for doc in dataset[text_col]:
             word_count += len(doc)
 
     return word_count
@@ -102,90 +104,45 @@ def get_top_ngrams(dataset: pd.DataFrame, column: str, n_words: int):
         .str.len()).explode('ngrams')) \
         .sort_values('count', ascending=False)
 
-def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
+
+def get_emotions_from_texts(dataset: pd.DataFrame, text_col: str):
     '''
-    Function that downloads the tokenizer and a pre-trained model
-    to detect the emotions from a set of documents within a dataset.
-    The goal is to compute global metrics and specific calculations
-    per each class to summarize the number of texts that belong
-    to each available emotion.
+    Function that downloads the tokenizer and a pre-trained 
+    Transformer model to detect the emotion of each document
+    stored within a dataset. The purpose is to assign to each
+    text its detected emotion as well as the class labels
+    from the 'task1' and 'task2' columns.
 
     Parameters
     ----------
     dataset : Pandas dataframe
         The data which contains a set of texts to analyze.
-    text_column : str
+    text_col : str
         The column name in which the set of texts is stored.
-    class_column : str
-        The column name in which the class labels are stored.
 
     Returns
     -------
-    A dictionary with the global metrics as well as the calculations
-    per each class.
+    A Pandas dataframe with the following columns:
+        - A first column which stores a list of strings with
+        the provided and analyzed texts.
+        - A second column which stores a list of integers
+        with the encode class labels of the 'task1' variable.
+        - A third column which stores a list of integers
+        with the encode class labels of the 'task2' variable.
+        - A fourth column which stores a list of strings with
+        the emotion recognized per text.
     '''
-    # Download the tokenizer and the model for emotion detection from Hugging Face
+    # Download a tokenizer and a Transformer pre-trained model
+    # for emotion detection from Hugging Face
     tokenizer = AutoTokenizer.from_pretrained('mrm8488/t5-base-finetuned-emotion')
     model = AutoModelWithLMHead.from_pretrained('mrm8488/t5-base-finetuned-emotion')
 
-    # Variables to save the global results and the emotions per class
-    global_emotions = {
-        'sadness': 0,
-        'joy': 0,
-        'love': 0,
-        'anger': 0,
-        'fear': 0,
-        'surprise': 0,
-    }
-    class_emotions = {
-        'ideological-inequality': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        },
-        'misogyny-non-sexual-violence': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        },
-        'non-sexist': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        },
-        'objectification': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        },
-        'sexual-violence': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        },
-        'stereotyping-dominance': {
-            'sadness': 0,
-            'joy': 0,
-            'love': 0,
-            'anger': 0,
-            'fear': 0,
-            'surprise': 0,
-        }
+    # Future dataset to store the text, the class labels and the emotion
+    emotion_dataset = {
+        text_col: list(dataset[text_col].values),
+        'task1': list(dataset['task1'].values),
+        'task2': list(dataset['task2'].values),
+        'emotion': []
     }
 
     # Convert the dataset into a list of records
@@ -193,27 +150,20 @@ def get_emotions(dataset: pd.DataFrame, text_column: str, class_column: str):
 
     # Iterate over the documents within the dataset
     for record in dataset_dict:
-        # Encode the input to pass it to the model to detect the emotion
+        # Encode the input to pass it to the Transformer model
         model_output = model.generate(
             input_ids=tokenizer.encode(
-                f'{record[text_column]}</s>', 
+                f'{record[text_col]}</s>', 
                 return_tensors='pt'),
             max_length=2)
 
         try:
             # Decode the output returned by the model
             decoded_output = [tokenizer.decode(ids) for ids in model_output]
-            detected_emotion = decoded_output[0][6:]
 
-            # Compute the results globally 
-            global_emotions[detected_emotion] += 1
-
-            # Compute the results per class
-            class_emotions[record[class_column]][detected_emotion] += 1
+            # Add the detected emotion if any
+            emotion_dataset['emotion'].append(decoded_output[0][6:])
         except:
-            pass
+            emotion_dataset['emotion'].append('UNKNOWN')
     
-    return {
-        'global_emotions': global_emotions,
-        'class_emotions': class_emotions
-    }
+    return pd.DataFrame.from_dict(emotion_dataset)

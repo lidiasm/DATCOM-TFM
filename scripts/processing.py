@@ -262,8 +262,8 @@ def to_stemmed_texts(dataset: pd.DataFrame, text_col: str):
 
 
 def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
-    add_stopwords: list = [], lemm: bool = False, 
-    stemm: bool = False, correct_words=False):
+    delete_stopwords: bool = False, add_stopwords: list = [], 
+    lemm: bool = False, stemm: bool = False, correct_words=False):
     '''
     Applies the next text processing techniques to a text
     column in a dataset. 
@@ -283,6 +283,9 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         The data which contains a set of texts.
     text_col : str
         The column name in which the set of texts is stored.
+    delete_stopwords : bool (optional, default False)
+        True to delete stopwords from English and Spanish
+        texts, False to not do it.
     add_stopwords : list (optional, default empty list)
         A list of additional stopwords to exclude.
     lemm : bool (optional, default False)
@@ -315,10 +318,11 @@ def text_processing_pipeline(dataset: pd.DataFrame, text_col: str,
         text_col=cleaned_col)
 
     # Delete stopwords for spanish and english texts
-    dataset[cleaned_col] = delete_stopwords(
-        dataset=dataset, 
-        text_col=cleaned_col,
-        add_stopwords=add_stopwords)
+    if (delete_stopwords):
+        dataset[cleaned_col] = delete_stopwords(
+            dataset=dataset, 
+            text_col=cleaned_col,
+            add_stopwords=add_stopwords)
 
     # Delete one-char words
     dataset[cleaned_col] = delete_wrong_words(
@@ -394,7 +398,8 @@ def to_numeric_labels(dataset: pd.DataFrame, class_col: str, encoding: dict = {}
 
 def process_encode_datasets(
     train_df: pd.DataFrame, test_df: pd.DataFrame,
-    lemm: bool, stemm: bool, correct_words: bool):
+    delete_stopwords: bool, lemm: bool, stemm: bool, 
+    correct_words: bool):
     '''
     Processes the sets of train and test documents
     and encodes the class labels of both datasets to convert
@@ -406,6 +411,9 @@ def process_encode_datasets(
         A dataset which contains the train samples.
     test_df : Pandas dataframe
         A dataset which contains the test samples.
+    delete_stopwords : bool
+        True to delete stopwords from English and Spanish
+        texts, False to not do it.
     lemm : bool
         True to lemmatize the texts, False to not apply it.
     stemm : bool
@@ -431,12 +439,14 @@ def process_encode_datasets(
         'train_df': text_processing_pipeline(
             dataset=train_df, 
             text_col='text', 
+            delete_stopwords=delete_stopwords,
             lemm=lemm,
             stemm=stemm, 
             correct_words=correct_words),
         'test_df':text_processing_pipeline(
             dataset=test_df, 
             text_col='text', 
+            delete_stopwords=delete_stopwords,
             lemm=lemm,
             stemm=stemm, 
             correct_words=correct_words),

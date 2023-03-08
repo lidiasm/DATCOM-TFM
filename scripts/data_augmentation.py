@@ -134,8 +134,7 @@ def apply_round_trip_translation(dataset: pd.DataFrame,
     trans_obj = Translate(src=src_lang, to=targ_lang)
 
     # Get the texts of the source language
-    filtered_dataset = (dataset[dataset['language'] == src_lang]).to_dict('records')
-    filtered_dict = filtered_dataset.to_dict('records')
+    filtered_dataset = (dataset[dataset['language'] == src_lang])
 
     # Save the translated texts and their labels
     translated_texts_labels = {
@@ -145,7 +144,7 @@ def apply_round_trip_translation(dataset: pd.DataFrame,
     }
 
     # Iterate over the train texts to apply RTT
-    for record in filtered_dict:
+    for record in filtered_dataset.to_dict('records'):
         translated_texts_labels[text_col].append(trans_obj.augment(record[text_col]))
         translated_texts_labels['task1'].append(record['task1'])
         translated_texts_labels['task2'].append(record['task1'])

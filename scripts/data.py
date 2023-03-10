@@ -2,9 +2,6 @@ import pandas as pd
 import nltk
 from transformers import AutoTokenizer, AutoModelWithLMHead
 
-EXIST_TRAIN_DATASET_PATH = '../data/EXIST2021_train.tsv'
-EXIST_TEST_DATASET_PATH = '../data/EXIST2021_test.tsv'
-
 
 def read_train_dataset():
     '''
@@ -15,7 +12,7 @@ def read_train_dataset():
     -------
     A Pandas dataframe
     '''
-    return pd.read_table(EXIST_TRAIN_DATASET_PATH)
+    return pd.read_table('../data/EXIST2021_train.tsv')
 
 
 def read_test_dataset():
@@ -27,7 +24,7 @@ def read_test_dataset():
     -------
     A Pandas dataframe
     '''
-    return pd.read_table(EXIST_TEST_DATASET_PATH)
+    return pd.read_table('../data/EXIST2021_test.tsv')
 
 
 def count_words(
@@ -155,3 +152,63 @@ def get_emotions_from_texts(dataset: pd.DataFrame, text_col: str):
             emotion_dataset['emotion'].append('UNKNOWN')
     
     return pd.DataFrame.from_dict(emotion_dataset)
+
+
+def analyze_predicted_probs(dataset: pd.DataFrame, probs_col: str):
+    '''
+    Function that shows the amount of the number of samples within 
+    each confidence interval from a provided list of predicted
+    probabilities between 0,0 and 1,0. 
+
+    Parameters
+    ----------
+    dataset : Pandas dataframe
+        A dataset which contains the predicted probabilities
+        for a set of samples.
+    probs_col : str
+        The column name in which there are the predicted probabilities.
+    '''
+    confidence_intervals = {
+        'Very low': (0.0, 0.2),
+        'Low': (0.2, 0.4),
+        'Medium': (0.4, 0.6),
+        'High': (0.6, 0.8),
+        'Very high': (0.8, 1.0)
+    }
+
+    for conf_interv in confidence_intervals:
+        min = confidence_intervals[conf_interv][0]
+        max = confidence_intervals[conf_interv][1]
+        count = dataset[(dataset[probs_col] >= min) & (dataset[probs_col] < max)].shape[0] if max != 1.0 \
+            else dataset[(dataset[probs_col] >= min) & (dataset[probs_col] <= max)].shape[0]
+        print(f'Confidence Interval {conf_interv} {confidence_intervals[conf_interv]}: {count} samples')
+
+
+def map_texts_to_emotions(text_ids: list, is_test: bool = True):
+    ''''
+    Function that relates each provided text with its detected
+    emotion previoulsy calculated and saved in a file, one per
+    a train dataset and another for a test dataset. 
+
+    Parameters
+    ----------
+    text_ids : list
+        A list of integers that contains the identifiers of the
+        train or test texts.
+    is_test : bool (optional, default True)
+        True if the provided list of text ids are related to a
+        test dataset, False if they're related to a train dataset.
+    '''
+    emotions_df = pd.read_csv('../data/emotions_EXIST2021_test.csv') if is_test \
+        else pd.read_csv('../data/emotions_EXIST2021_train.csv') 
+    
+    # Filter the dataset by the provided text identifiers
+    emotions_df = emotions_df[emotions_df['id'].isin(text_ids)]
+
+    # Count the number of texts per each emotion
+    unique_emotions = list(set(list(emotions_df['emotion'].values)))
+    for emotion in unique_emotions:
+        count = emotions_df[emotions_df['emotion'] == emotion].shape[0] 
+        print(f'Emotion: {emotion} - No. of texts: {count}')
+    
+

@@ -8,7 +8,7 @@
 
 ### Datasets
 
-Se pretende utilizar los conjuntos de entrenamiento y validación correspondientes a la **competición** [**EXIST 2022**](http://nlp.uned.es/exist2022/), cuyo primer propósito consiste en desarrollar modelos de Aprendizaje Automático capaces de **detectar si un texto es sexista o no**. Se trata de la segunda edición a nivel internacional que persigue la creación, diseño y evolución de sistemas de filtrado de contenido que ayuden a mejorar y establecer políticas de igualdad en redes sociales. A continuación se destacan los aspectos más relevantes de ambos datasets. Existe un análisis teórico y estadístico en mayor profundidad dentro del notebook [*eda.ipynb*](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/eda.ipynb).
+Se pretende utilizar los conjuntos de entrenamiento y validación correspondientes a la **competición** [**EXIST 2021**](http://nlp.uned.es/exist2021/), cuyo primer propósito consiste en desarrollar modelos de Aprendizaje Automático capaces de **detectar si un texto es sexista o no**. Se trata de la segunda edición a nivel internacional que persigue la creación, diseño y evolución de sistemas de filtrado de contenido que ayuden a mejorar y establecer políticas de igualdad en redes sociales. A continuación se destacan los aspectos más relevantes de ambos datasets. Existe un análisis teórico y estadístico en mayor profundidad dentro del notebook [*eda.ipynb*](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/eda.ipynb).
 
 * Fuentes de datos: **Twitter y Gab**.
 * Idiomas: **español e inglés**.
@@ -18,9 +18,10 @@ Se pretende utilizar los conjuntos de entrenamiento y validación correspondient
 
 ### Propuestas y aproximaciones
 
-La gran mayoría de las soluciones implementadas por los participantes en sendas competiciones se basan en el uso de variantes de **arquitecturas complejas**, tales como *BERT* o *LSTM*. No obstante, existe un amplio número de candidatos que comenzaron experimentando con **algoritmos clásicos** de Aprendizaje Automático como *Random Forest*, *Support Vector Machine* y Regresión Logística. Con el propósito de comprender el problema se establecen ambas aproximaciones como **pilares** fundamentales para la construcción de este proyecto.
+La gran mayoría de las soluciones implementadas por los participantes en sendas competiciones se basan en el uso de variantes de **arquitecturas complejas**, tales como *BERT* o *LSTM*. No obstante, existe un amplio número de candidatos que comenzaron experimentando con **algoritmos clásicos** de Aprendizaje Automático como *Random Forest*, *Support Vector Machine* y Regresión Logística. Con el propósito de comprender el problema se pretende realizar diversas experimentaciones con las siguientes algoritmos clásicos y arquitecturas basadas en texto:
 
-### Tecnologías
+* Regresión Logística: [notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/lr_models.ipynb)
 
-* **Python** como lenguaje de programación.
-* **Keras** para el entrenamiento y validación de modelos con arquitecturas LSTM y BiLSTM.
+* LSTM y Bi-LSTM: 
+
+* BERT: 

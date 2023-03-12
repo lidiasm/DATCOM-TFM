@@ -22,6 +22,10 @@ La gran mayoría de las soluciones implementadas por los participantes en sendas
 
 * Regresión Logística: [notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/lr_models.ipynb)
 
-* LSTM y Bi-LSTM: 
+* LSTM y Bi-LSTM
+
+    * [Notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/run_lstm_experiments.ipynb) que ha permitido descubrir la aportación relativa a cada modificación realizada sobre la configuración de los datasets y de los modelos.
+
+    * [Notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/lstm_models.ipynb) con dos modelos de ejemplo, uno para textos ingleses y un segundo para documentos en español, con la mejor configuración identificada para cada caso.
 
 * BERT: 

@@ -28,6 +28,11 @@ La gran mayoría de las soluciones implementadas por los participantes en sendas
 
     * [Notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/lstm_models.ipynb) con dos modelos de ejemplo, uno para textos ingleses y un segundo para documentos en español, con la mejor configuración identificada para cada caso.
 
-* BERT: [notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/bert_models.ipynb)
+* BERT
+
+    * [Notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/run_bert_experiments.ipynb) que ha permitido descubrir la aportación relativa a cada modificación realizada sobre la configuración de los datasets y de los modelos.
+
+    * [Notebook](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/bert_models.ipynb) con dos modelos de ejemplo, uno para textos ingleses y un segundo para documentos en español, con la mejor configuración identificada para cada caso.
+
 
 <ins>Nota: debido a restricciones de tamaño los modelos no se encuentran en este repositorio. Pueden contactarme a lidiasm96@correo.ugr.es o lidia.96.sm@gmail.com en caso de que deseen experimentar con ellos.</ins>

@@ -131,6 +131,9 @@ dmypy.json
 # Virtual environment folder
 venv/
 
+# Model folder
+models/
+
 # Output folder
 outputs/
 embeddings/

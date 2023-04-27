@@ -1,3 +1,5 @@
+import re
+import openai
 import pandas as pd
 from textaugment import EDA
 from textaugment import Translate
@@ -150,3 +152,64 @@ def apply_round_trip_translation(dataset: pd.DataFrame,
         translated_texts_labels['task2'].append(record['task1'])
 
     return pd.DataFrame.from_dict(translated_texts_labels)
+
+
+def create_new_texts_by_removing_words(text: str, one_word: bool=True):
+    '''
+    Creates a new set of texts based on one provided by removing only 
+    one word at a time or two consecutive words.
+
+    Parameters
+    ----------
+    text : str
+        A string that represents the document in which the new
+        samples will be based on.
+    one_word : bool (optional, default True)
+        True to remove one word per iteration, False to remove two
+        consecutive words per iteration.
+
+    Returns
+    -------
+    A list of strings with the new generated texts.
+    '''
+    words = text.split()
+
+    if (one_word):
+        return [re.sub(' +', ' ', text.replace(word, '')) for word in words]
+    else:
+        return [re.sub(' +', ' ', text.replace(words[index-1], '').replace(words[index], '')) \
+                for index in range(1, len(words))]
+    
+
+def generate_text_using_gpt3(text: str, lang: str):
+    '''
+    Calls the OpenAI API to send it a task to generate a text 
+    based on the provided one but with negative verbs meaning
+    the opposite using the Davinci GPT-3 model.
+
+    Parameters
+    ----------
+    text : str
+        A string with the text to take it as an example to generate
+        a synthetic sample with negative verbs.
+    lang : str
+        A string with the language of the texts. Available are:
+        en (English) or es (Spanish).
+
+    Returns
+    -------
+    A string with the generated text by the Davinci GPT-3 model.
+    '''
+    # Set up the OpenAI API client
+    openai.api_key = OPEN_AI_KEY
+
+    # Generate a response
+    task = 'Transform the verbs of this sentence to negative' if lang == 'en' \
+        else 'Transforma los verbos de estas frases a negativo'
+    
+    completion = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=f"task: {text}"
+    )
+
+    return completion.choices[0].text

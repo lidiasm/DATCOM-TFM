@@ -6,6 +6,18 @@
 
 ### Objetivos del proyecto
 
+* Realizar un análisis exploratorio de los conjuntos de datos *EXIST2021* para comprender las características y patrones del lenguaje sexista en las redes sociales.
+
+* Evaluar y seleccionar técnicas de Procesamiento de Lenguaje Natural adecuadas para el análisis de los mensajes extraídos de redes sociales.
+
+* Desarrollar modelos de Aprendizaje Automático para la detección de mensajes sexistas publicados en redes sociales.
+
+* Evaluar el rendimiento de los modelos anteriores utilizando métricas relevantes de Aprendizaje Automático, como precisión, recall y F1-score.
+
+* Integrar soluciones de explicabilidad e interpretabilidad sobre los modelos con mejor comportamiento para mejorar la extracción de conocimiento y comprensión del problema.
+
+* Realizar un análisis detallado de los resultados para identificar fortalezas y debilidades del modelo y sugerir posibles mejoras.
+
 ### Datasets
 
 Se pretende utilizar los conjuntos de entrenamiento y validación correspondientes a la **competición** [**EXIST 2021**](http://nlp.uned.es/exist2021/), cuyo primer propósito consiste en desarrollar modelos de Aprendizaje Automático capaces de **detectar si un texto es sexista o no**. Se trata de la segunda edición a nivel internacional que persigue la creación, diseño y evolución de sistemas de filtrado de contenido que ayuden a mejorar y establecer políticas de igualdad en redes sociales. A continuación se destacan los aspectos más relevantes de ambos datasets. Existe un análisis teórico y estadístico en mayor profundidad dentro del notebook [*eda.ipynb*](https://github.com/lidiasm/DATCOM-TFM/blob/main/notebooks/eda.ipynb).

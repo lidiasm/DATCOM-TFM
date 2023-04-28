@@ -209,7 +209,7 @@ def generate_text_using_gpt3(text: str, lang: str):
     
     completion = openai.Completion.create(
         engine="text-davinci-003",
-        prompt=f"task: {text}"
+        prompt=f"{task}: {text}"
     )
 
     return completion.choices[0].text

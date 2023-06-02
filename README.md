@@ -4,6 +4,8 @@
 
 ### Descripción del problema
 
+Si bien el comportamiento sexista siempre ha estado presente desde tiempos inmemoriables no ha sido hasta hace unas décadas cuando se ha comenzado una lucha para su erradicación. Cuando pensábamos que se habían realizado progresos importantes en esta causa, las nuevas tecnologías emergentes como las redes sociales se han postulado como un nicho en el que desarrollar este tipo de conductas de forma cómoda y anónima. La menospreciación y la irrespetuosidad contra el colectivo femenino en formato escrito conlleva graves consecuencias en el mundo real, tal y como se puede apreciar diariamente en los informativos acerca de los numerosos casos de violencia de género. En este proyecto se experimenta con diferentes técnicas, algoritmos y arquitecturas de diversa naturaleza considerando los ámbitos de Aprendizaje Automático, Procesamiento Natural del Lenguaje y Aprendizaje Profundo. Sin embargo no se podrá confiar en su actuación ni mejorar su rendimiento a menos que podamos interpretar sus decisiones fácilmente. Por ello se han integrado análisis de explicabilidad tanto de desarrollo propio, como mediante la aplicación de metodologías específicas de un nuevo área que trata esta temática conocida como Explicabilidad de la Inteligencia Artificial. De este modo te brinda la capacidad de incluso sugerir la inclusión de procedimientos adicionales con los que paliar los defectos intrínsecos a los modelos a partir de la generación de explicaciones comprensibles por personas.
+
 ### Objetivos del proyecto
 
 * Realizar un análisis exploratorio de los conjuntos de datos *EXIST2021* para comprender las características y patrones del lenguaje sexista en las redes sociales.

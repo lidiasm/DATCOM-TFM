@@ -8,7 +8,7 @@ Si bien el comportamiento sexista siempre ha estado presente desde tiempos inmem
 
 ### Objetivos del proyecto
 
-* Realizar un análisis exploratorio de los conjuntos de datos *EXIST2021* para comprender las características y patrones del lenguaje sexista en las redes sociales.
+* Realizar un análisis exploratorio de a un conjunto de datos con textos sexistas procedentes de redes sociales para comprender las características y patrones del lenguaje sexista en las redes sociales.
 
 * Evaluar y seleccionar técnicas de Procesamiento de Lenguaje Natural adecuadas para el análisis de los mensajes extraídos de redes sociales.
 
